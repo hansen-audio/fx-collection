@@ -6,35 +6,36 @@ namespace ha {
 namespace fx_collection {
 
 //------------------------------------------------------------------------
-static void applyWidth(float_t& valueL, float_t& valueR, float_t width)
+static void apply_width(float_t& valueL, float_t& valueR, float_t width)
 {
     valueL = std::max(valueL, valueR * width);
     valueR = std::max(valueR, valueL * width);
 }
 
 //------------------------------------------------------------------------
-static void applyMix(float_t& value, float_t mix)
+static void apply_mix(float_t& value, float_t mix)
 {
-    static const float_t kMixMax = 1.f;
-    value                        = (kMixMax - mix) + value * mix;
+    static constexpr float_t MIX_MAX = float_t(1.);
+    value                            = (MIX_MAX - mix) + value * mix;
 }
 
 //------------------------------------------------------------------------
-static void applyMix(float_t& valueL, float_t& valueR, float_t mix)
+static void apply_mix(float_t& valueL, float_t& valueR, float_t mix)
 {
-    applyMix(valueL, mix);
-    applyMix(valueR, mix);
+    apply_mix(valueL, mix);
+    apply_mix(valueR, mix);
 }
 
 //------------------------------------------------------------------------
-static void applyContour(float_t& valueL, float_t& valueR, TranceGate::ContourFilters& contour)
+static void
+apply_contour(float_t& valueL, float_t& valueR, trance_gate::contour_filters_list& contour)
 {
-    valueL = ContourFilter::process(valueL, contour.at(TranceGate::L));
-    valueR = ContourFilter::process(valueR, contour.at(TranceGate::R));
+    valueL = ContourFilter::process(valueL, contour.at(trance_gate::L));
+    valueR = ContourFilter::process(valueR, contour.at(trance_gate::R));
 }
 
 //------------------------------------------------------------------------
-static void operator++(TranceGate::StepPos& step)
+static void operator++(trance_gate::step_pos& step)
 {
     ++step.first;
     if (!(step.first < step.second))
@@ -42,40 +43,43 @@ static void operator++(TranceGate::StepPos& step)
 }
 
 //------------------------------------------------------------------------
-//	TranceGate
+//	trance_gate
 //------------------------------------------------------------------------
-TranceGate::TranceGate()
+trance_gate::trance_gate()
 {
-    contourFilters.resize(kNumChannels);
-    channelSteps.resize(kNumChannels);
-    for (auto& step : channelSteps)
-        step.resize(kNumSteps, 0.f);
+    contour_filters.resize(NUM_CHANNELS);
+    channel_steps.resize(NUM_CHANNELS);
+    for (auto& step : channel_steps)
+        step.resize(NUM_STEPS, float_t(0.));
 
-    delayPhase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(1.f / 32.f));
-    delayPhase.set_tempo(120.f);
-    delayPhase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    constexpr float_t ONE_32TH  = float_t(1. / 32.);
+    constexpr float_t TEMPO_BPM = float_t(120.);
 
-    fadeInPhase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(1.f / 32.f));
-    fadeInPhase.set_tempo(120.f);
-    fadeInPhase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    delay_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
+    delay_phase.set_tempo(TEMPO_BPM);
+    delay_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
 
-    stepPhase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(1.f / 32.f));
-    stepPhase.set_tempo(120.f);
-    stepPhase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    fade_in_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
+    fade_in_phase.set_tempo(TEMPO_BPM);
+    fade_in_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+
+    step_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
+    step_phase.set_tempo(TEMPO_BPM);
+    step_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
 }
 
 //------------------------------------------------------------------------
-void TranceGate::trigger(float_t delayLength, float_t fadeInLength)
+void trance_gate::trigger(float_t delay_length, float_t fade_in_length)
 {
     //! Delay and FadeIn time can ony be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
-    setDelay(delayLength);
-    setFadeIn(fadeInLength);
+    set_delay(delay_length);
+    set_fade_in(fade_in_length);
 
-    delayPhase.reset_one_shot();
-    fadeInPhase.reset_one_shot();
-    stepPhase.reset();
+    delay_phase.reset_one_shot();
+    fade_in_phase.reset_one_shot();
+    step_phase.reset();
     step.first = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
@@ -88,138 +92,138 @@ void TranceGate::trigger(float_t delayLength, float_t fadeInLength)
         die Filter auf 1.0 resetted und das muss auch im ::trigger passieren.
     */
 
-    if (isDelayActive)
+    if (is_delay_active)
         reset();
 }
 
 //------------------------------------------------------------------------
-void TranceGate::reset()
+void trance_gate::reset()
 {
     /*  Wenn Delay aktiv ist müssen die Filter auf 1.f resetted werden.
         Ansonsten klickt das leicht, weil die Filter nach dem Delay
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    float_t resetValue = isDelayActive ? 1.f : 0.f;
-    for (auto& filter : contourFilters)
+    float_t resetValue = is_delay_active ? float_t(1.) : float_t(0.);
+    for (auto& filter : contour_filters)
     {
         ContourFilter::reset(resetValue, filter);
     }
 }
 
 //------------------------------------------------------------------------
-void TranceGate::process(const float_vector& in, float_vector& out)
+void trance_gate::process(const float_vector& in, float_vector& out)
 {
-    if (isDelayActive && !delayPhase.update_one_shot(1))
+    if (is_delay_active && !delay_phase.update_one_shot(1))
     {
         out = in;
         return;
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    auto valueL = channelSteps.at(L).at(step.first);
-    auto valueR = channelSteps.at(ch).at(step.first);
+    auto valueL = channel_steps.at(L).at(step.first);
+    auto valueR = channel_steps.at(ch).at(step.first);
 
-    applyWidth(valueL, valueR, width);            //! Width
-    applyContour(valueL, valueR, contourFilters); //! The filters smooth everything, cracklefree.
+    apply_width(valueL, valueR, width);             //! Width
+    apply_contour(valueL, valueR, contour_filters); //! The filters smooth everything, cracklefree.
 
-    auto tmpMix = isFadeInActive ? mix * fadeInPhase.get_one_shot_phase() : mix;
-    applyMix(valueL, valueR, tmpMix); //! Mix must be applied last
+    auto tmp_mix = is_fade_in_active ? mix * fade_in_phase.get_one_shot_phase() : mix;
+    apply_mix(valueL, valueR, tmp_mix); //! Mix must be applied last
 
     out[L] = in[L] * valueL;
     out[R] = in[R] * valueR;
 
-    updatePhases();
+    update_phases();
 }
 
 //------------------------------------------------------------------------
-void TranceGate::updatePhases()
+void trance_gate::update_phases()
 {
-    fadeInPhase.update_one_shot(1);
-    if (stepPhase.update(1))
+    fade_in_phase.update_one_shot(1);
+    if (step_phase.update(1))
         ++step;
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setSamplerate(float_t value)
+void trance_gate::set_sample_rate(float_t value)
 {
-    delayPhase.set_sample_rate(value);
-    fadeInPhase.set_sample_rate(value);
-    stepPhase.set_sample_rate(value);
-    for (auto& filter : contourFilters)
+    delay_phase.set_sample_rate(value);
+    fade_in_phase.set_sample_rate(value);
+    step_phase.set_sample_rate(value);
+    for (auto& filter : contour_filters)
     {
         ContourFilter::updateSamplerate(value, filter);
     }
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setStep(int32_t channel, int32_t step, float_t value)
+void trance_gate::set_step(i32 channel, i32 step, float_t value)
 {
-    channelSteps.at(channel).at(step) = value;
+    channel_steps.at(channel).at(step) = value;
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setWidth(float_t value)
+void trance_gate::set_width(float_t value)
 {
-    width = 1.f - value;
+    width = float_t(1.) - value;
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setStereoMode(bool value)
+void trance_gate::set_stereo_mode(bool value)
 {
     ch = value ? R : L;
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setStepLength(float_t value)
+void trance_gate::set_step_length(float_t value)
 {
-    stepPhase.set_note_length(value);
+    step_phase.set_note_length(value);
 }
 //------------------------------------------------------------------------
-void TranceGate::setTempo(float_t value)
+void trance_gate::set_tempo(float_t value)
 {
-    delayPhase.set_tempo(value);
-    fadeInPhase.set_tempo(value);
-    stepPhase.set_tempo(value);
+    delay_phase.set_tempo(value);
+    fade_in_phase.set_tempo(value);
+    step_phase.set_tempo(value);
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setStepCount(int32_t value)
+void trance_gate::set_step_count(i32 value)
 {
     step.second = value;
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setContour(float_t value)
+void trance_gate::set_contour(float_t value)
 {
     if (contour == value)
         return;
 
     contour = value;
-    for (auto& filter : contourFilters)
+    for (auto& filter : contour_filters)
     {
         ContourFilter::setTime(value, filter);
     }
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setFadeIn(float_t value)
+void trance_gate::set_fade_in(float_t value)
 {
-    isFadeInActive = value > 0.f;
-    if (!isFadeInActive)
+    is_fade_in_active = value > float_t(0.);
+    if (!is_fade_in_active)
         return;
 
-    fadeInPhase.set_note_length(value);
+    fade_in_phase.set_note_length(value);
 }
 
 //------------------------------------------------------------------------
-void TranceGate::setDelay(float_t value)
+void trance_gate::set_delay(float_t value)
 {
-    isDelayActive = value > 0.f;
-    if (!isDelayActive)
+    is_delay_active = value > float_t(0.);
+    if (!is_delay_active)
         return;
 
-    delayPhase.set_note_length(value);
+    delay_phase.set_note_length(value);
 }
 
 //------------------------------------------------------------------------

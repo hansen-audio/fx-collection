@@ -55,8 +55,8 @@ private:
 };
 
 //------------------------------------------------------------------------
-//	ContourFilter
-//	TODO: Bei Gelegenheit nochmal Generaisieren den ContourFilter.
+//	contour_filter
+//	TODO: Bei Gelegenheit nochmal Generaisieren den contour_filter.
 //------------------------------------------------------------------------
 class ContourFilter
 {
@@ -93,46 +93,46 @@ private:
 };
 
 //------------------------------------------------------------------------
-/**	TranceGate */
+/**	trance_gate */
 //------------------------------------------------------------------------
-class TranceGate
+class trance_gate
 {
 public:
     //--------------------------------------------------------------------
-    static constexpr i32 kNumChannels = 2;
-    static constexpr i32 kNumSteps    = 32;
+    static constexpr i32 NUM_CHANNELS = 2;
+    static constexpr i32 NUM_STEPS    = 32;
     static constexpr i32 L            = 0;
     static constexpr i32 R            = 1;
 
-    using StepValue      = std::vector<float_t>;
-    using ChannelSteps   = std::vector<StepValue>;
-    using ContourFilters = std::vector<ContourFilter::Data>;
-    using StepPos        = std::pair<int32_t, int32_t>;
+    using step_value           = std::vector<float_t>;
+    using channel_steps_list   = std::vector<step_value>;
+    using contour_filters_list = std::vector<ContourFilter::Data>;
+    using step_pos             = std::pair<i32, i32>;
 
-    TranceGate();
+    trance_gate();
 
     void process(const float_vector& in, float_vector& out);
-    void setSamplerate(float_t value);
-    void setTempo(float_t value);
+    void set_sample_rate(float_t value);
+    void set_tempo(float_t value);
     void trigger(float_t delayLength = 0.f, float_t withFadeIn = 0.f);
     void reset();
 
-    void setStepCount(int32_t value);
-    void setStep(int32_t channel, int32_t step, float_t value);
-    void setStepLength(float_t value);
-    void setMix(float_t value) { mix = value; }
-    void setContour(float_t value);
-    void setStereoMode(bool value);
-    void setWidth(float_t value);
+    void set_step_count(i32 value);
+    void set_step(i32 channel, i32 step, float_t value);
+    void set_step_length(float_t value);
+    void set_mix(float_t value) { mix = value; }
+    void set_contour(float_t value);
+    void set_stereo_mode(bool value);
+    void set_width(float_t value);
 
     //--------------------------------------------------------------------
 private:
-    void setFadeIn(float_t value);
-    void setDelay(float_t value);
-    void updatePhases();
+    void set_fade_in(float_t value);
+    void set_delay(float_t value);
+    void update_phases();
 
-    ChannelSteps channelSteps;
-    ContourFilters contourFilters;
+    channel_steps_list channel_steps;
+    contour_filters_list contour_filters;
 
     /*
         Wir haben 3 Phasen, die hier zum Einsatz kommen:
@@ -140,18 +140,18 @@ private:
         2. Fade In Phase: Dauer der TranceGate fade in Zeit
         3. Step Phase: läuft über die Dauer eines einzelnen Steps
     */
-    ha::dtb::modulation::one_shot_phase delayPhase;
-    ha::dtb::modulation::one_shot_phase fadeInPhase;
-    ha::dtb::modulation::phase stepPhase;
+    ha::dtb::modulation::one_shot_phase delay_phase;
+    ha::dtb::modulation::one_shot_phase fade_in_phase;
+    ha::dtb::modulation::phase step_phase;
 
-    StepPos step;
+    step_pos step;
     float_t mix     = 1.f;
     float_t width   = 0.f;
-    int32_t ch      = L;
+    i32 ch          = L;
     float_t contour = -1.f;
 
-    bool isDelayActive  = false;
-    bool isFadeInActive = false;
+    bool is_delay_active   = false;
+    bool is_fade_in_active = false;
 };
 
 //------------------------------------------------------------------------
