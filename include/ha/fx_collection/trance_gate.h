@@ -15,80 +15,83 @@ using Real = float;
 //------------------------------------------------------------------------
 /** A smoothing-filter like dezipper. Actually a one-pole filter. */
 //------------------------------------------------------------------------
-class Smoother
+class smoother final
 {
 public:
     //--------------------------------------------------------------------
-    struct Data
+    struct context_data
     {
         Real a = 0;
         Real b = 0;
         Real z = 0;
     };
 
-    static Data init(Real a = 0.9)
+    static context_data init(Real a = 0.9)
     {
-        Data data{a, Real(1.) - a, 0};
+        context_data data{a, Real(1.) - a, 0};
 
         return data;
     }
 
-    static void updatePol(Real a, Data& data)
+    static void updatePol(Real a, context_data& data)
     {
         data.a = a;
         data.b = Real(1.) - data.a;
     }
 
-    static Real smooth(Real in, Data& data)
+    static Real smooth(Real in, context_data& data)
     {
-        if (isEqual(in, data))
+        if (is_equal(in, data))
             return data.z;
 
         data.z = (in * data.b) + (data.z * data.a);
         return data.z;
     }
 
-    static void reset(Real in, Data& data) { data.z = in; }
+    static void reset(Real in, context_data& data) { data.z = in; }
     //--------------------------------------------------------------------
 private:
-    static bool isEqual(Real in, const Data& data) { return in == data.z; }
+    static bool is_equal(Real in, const context_data& data) { return in == data.z; }
 };
 
 //------------------------------------------------------------------------
 //	contour_filter
 //	TODO: Bei Gelegenheit nochmal Generaisieren den contour_filter.
 //------------------------------------------------------------------------
-class ContourFilter
+class contour_filter
 {
 public:
     //--------------------------------------------------------------------
-    struct Data
+    struct context_data
     {
-        float_t samplerate = 1.f;
-        Smoother::Data smootherData;
+        float_t sample_rate = 1.f;
+        smoother::context_data smoother_data;
     };
 
-    static void updateSamplerate(float_t value, Data& data) { data.samplerate = value; }
-    static void reset(float_t value, Data& data) { Smoother::reset(value, data.smootherData); }
-    static float_t process(float_t value, Data& data)
+    static void update_sample_rate(float_t value, context_data& data) { data.sample_rate = value; }
+    static void reset(float_t value, context_data& data)
     {
-        return Smoother::smooth(value, data.smootherData);
+        smoother::reset(value, data.smoother_data);
+    }
+    static float_t process(float_t value, context_data& data)
+    {
+        return smoother::smooth(value, data.smoother_data);
     }
 
     // @param value Given in seconds.
-    static void setTime(float_t value, Data& data)
+    static void setTime(float_t value, context_data& data)
     {
-        auto pole = tau2pole(value, data.samplerate);
-        Smoother::updatePol(pole, data.smootherData);
+        auto pole = tau_to_pole(value, data.sample_rate);
+        smoother::updatePol(pole, data.smoother_data);
     }
     //--------------------------------------------------------------------
 private:
-    static float_t tau2pole(float_t tau, float_t sr)
+    static float_t tau_to_pole(float_t tau, float_t sample_rate)
     {
         //! https://en.wikipedia.org/wiki/Time_constant
         //! (5 * Tau) means 99.3% reached thats sufficient.
-        constexpr float_t kFiveRecip = 1.f / 5.f;
-        return exp(-1 / ((tau * kFiveRecip) * sr));
+        constexpr float_t RECIPROCAL_5 = float(1. / 5.);
+        return exp(float_t(-1) / ((tau * RECIPROCAL_5) * sample_rate));
     }
 };
 
@@ -106,7 +109,7 @@ public:
 
     using step_value           = std::vector<float_t>;
     using channel_steps_list   = std::vector<step_value>;
-    using contour_filters_list = std::vector<ContourFilter::Data>;
+    using contour_filters_list = std::vector<contour_filter::context_data>;
     using step_pos             = std::pair<i32, i32>;
 
     trance_gate();
@@ -114,7 +117,7 @@ public:
     void process(const float_vector& in, float_vector& out);
     void set_sample_rate(float_t value);
     void set_tempo(float_t value);
-    void trigger(float_t delayLength = 0.f, float_t withFadeIn = 0.f);
+    void trigger(float_t delayLength = float_t(0.), float_t withFadeIn = float_t(0.));
     void reset();
 
     void set_step_count(i32 value);
@@ -145,10 +148,10 @@ private:
     ha::dtb::modulation::phase step_phase;
 
     step_pos step;
-    float_t mix     = 1.f;
-    float_t width   = 0.f;
+    float_t mix     = float_t(1.);
+    float_t width   = float_t(0.);
     i32 ch          = L;
-    float_t contour = -1.f;
+    float_t contour = float_t(-1.);
 
     bool is_delay_active   = false;
     bool is_fade_in_active = false;

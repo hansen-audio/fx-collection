@@ -30,8 +30,8 @@ static void apply_mix(float_t& valueL, float_t& valueR, float_t mix)
 static void
 apply_contour(float_t& valueL, float_t& valueR, trance_gate::contour_filters_list& contour)
 {
-    valueL = ContourFilter::process(valueL, contour.at(trance_gate::L));
-    valueR = ContourFilter::process(valueR, contour.at(trance_gate::R));
+    valueL = contour_filter::process(valueL, contour.at(trance_gate::L));
+    valueR = contour_filter::process(valueR, contour.at(trance_gate::R));
 }
 
 //------------------------------------------------------------------------
@@ -107,7 +107,7 @@ void trance_gate::reset()
     float_t resetValue = is_delay_active ? float_t(1.) : float_t(0.);
     for (auto& filter : contour_filters)
     {
-        ContourFilter::reset(resetValue, filter);
+        contour_filter::reset(resetValue, filter);
     }
 }
 
@@ -152,7 +152,7 @@ void trance_gate::set_sample_rate(float_t value)
     step_phase.set_sample_rate(value);
     for (auto& filter : contour_filters)
     {
-        ContourFilter::updateSamplerate(value, filter);
+        contour_filter::update_sample_rate(value, filter);
     }
 }
 
@@ -202,7 +202,7 @@ void trance_gate::set_contour(float_t value)
     contour = value;
     for (auto& filter : contour_filters)
     {
-        ContourFilter::setTime(value, filter);
+        contour_filter::setTime(value, filter);
     }
 }
 
