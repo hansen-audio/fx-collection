@@ -9,8 +9,8 @@ project(ha-effect-collection)
 add_subdirectory(external)
 
 add_library(effect-collection STATIC
-    include/ha/effect_collection/types.h
-    include/ha/effect_collection/trance_gate.h
+    include/ha/fx_collection/types.h
+    include/ha/fx_collection/trance_gate.h
     source/trance_gate.cpp
 )
 
