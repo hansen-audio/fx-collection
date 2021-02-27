@@ -79,7 +79,7 @@ public:
     }
 
     // @param value Given in seconds.
-    static void setTime(float_t value, context_data& data)
+    static void set_time(float_t value, context_data& data)
     {
         auto pole = tau_to_pole(value, data.sample_rate);
         smoother::updatePol(pole, data.smoother_data);

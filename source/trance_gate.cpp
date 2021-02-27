@@ -6,10 +6,10 @@ namespace ha {
 namespace fx_collection {
 
 //------------------------------------------------------------------------
-static void apply_width(float_t& valueL, float_t& valueR, float_t width)
+static void apply_width(float_t& value_le, float_t& value_ri, float_t width)
 {
-    valueL = std::max(valueL, valueR * width);
-    valueR = std::max(valueR, valueL * width);
+    value_le = std::max(value_le, value_ri * width);
+    value_ri = std::max(value_ri, value_le * width);
 }
 
 //------------------------------------------------------------------------
@@ -20,18 +20,18 @@ static void apply_mix(float_t& value, float_t mix)
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(float_t& valueL, float_t& valueR, float_t mix)
+static void apply_mix(float_t& value_le, float_t& value_ri, float_t mix)
 {
-    apply_mix(valueL, mix);
-    apply_mix(valueR, mix);
+    apply_mix(value_le, mix);
+    apply_mix(value_ri, mix);
 }
 
 //------------------------------------------------------------------------
 static void
-apply_contour(float_t& valueL, float_t& valueR, trance_gate::contour_filters_list& contour)
+apply_contour(float_t& value_le, float_t& value_ri, trance_gate::contour_filters_list& contour)
 {
-    valueL = contour_filter::process(valueL, contour.at(trance_gate::L));
-    valueR = contour_filter::process(valueR, contour.at(trance_gate::R));
+    value_le = contour_filter::process(value_le, contour.at(trance_gate::L));
+    value_ri = contour_filter::process(value_ri, contour.at(trance_gate::R));
 }
 
 //------------------------------------------------------------------------
@@ -71,7 +71,7 @@ trance_gate::trance_gate()
 //------------------------------------------------------------------------
 void trance_gate::trigger(float_t delay_length, float_t fade_in_length)
 {
-    //! Delay and FadeIn time can ony be set in trigger. Changing
+    //! Delay and FadeIn time can only be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
     set_delay(delay_length);
@@ -202,7 +202,7 @@ void trance_gate::set_contour(float_t value)
     contour = value;
     for (auto& filter : contour_filters)
     {
-        contour_filter::setTime(value, filter);
+        contour_filter::set_time(value, filter);
     }
 }
 
