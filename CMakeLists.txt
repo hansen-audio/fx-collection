@@ -15,7 +15,7 @@ add_library(effect-collection STATIC
 )
 
 target_link_libraries(effect-collection 
-    PRIVATE
+    PUBLIC
         dsp-tool-box
 )
 
