@@ -17,6 +17,7 @@ add_library(effect-collection STATIC
 target_link_libraries(effect-collection 
     PUBLIC
         dsp-tool-box
+        aligned-allocator
 )
 
 target_include_directories(effect-collection

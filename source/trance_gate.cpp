@@ -112,7 +112,7 @@ void trance_gate::reset()
 }
 
 //------------------------------------------------------------------------
-void trance_gate::process(const float_vector& in, float_vector& out)
+void trance_gate::process(const vector_float& in, vector_float& out)
 {
     if (is_delay_active && !delay_phase.update_one_shot(1))
     {
@@ -121,17 +121,18 @@ void trance_gate::process(const float_vector& in, float_vector& out)
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    auto valueL = channel_steps.at(L).at(step.first);
-    auto valueR = channel_steps.at(ch).at(step.first);
+    auto value_le = channel_steps.at(L).at(step.first);
+    auto value_ri = channel_steps.at(ch).at(step.first);
 
-    apply_width(valueL, valueR, width);             //! Width
-    apply_contour(valueL, valueR, contour_filters); //! The filters smooth everything, cracklefree.
+    apply_width(value_le, value_ri, width); //! Width
+    apply_contour(value_le, value_ri,
+                  contour_filters); //! The filters smooth everything, cracklefree.
 
     auto tmp_mix = is_fade_in_active ? mix * fade_in_phase.get_one_shot_phase() : mix;
-    apply_mix(valueL, valueR, tmp_mix); //! Mix must be applied last
+    apply_mix(value_le, value_ri, tmp_mix); //! Mix must be applied last
 
-    out[L] = in[L] * valueL;
-    out[R] = in[R] * valueR;
+    out[L] = in[L] * value_le;
+    out[R] = in[R] * value_ri;
 
     update_phases();
 }

@@ -2,15 +2,18 @@
 
 #pragma once
 
-#include <array>
+#include "ha/aligned_allocator/allocator.h"
 #include <cstdint>
+#include <vector>
 
 namespace ha {
 namespace fx_collection {
 //------------------------------------------------------------------------
-using i32          = std::int32_t;
-using float_t      = float;
-using float_vector = std::array<float_t, 4>;
+constexpr std::size_t BYTE_ALIGNMENT = 16;
+using i32                            = std::int32_t;
+using float_t                        = float;
+using vector_float =
+    std::vector<float_t, ha::alignment::aligned_allocator<float_t, BYTE_ALIGNMENT>>;
 
 //------------------------------------------------------------------------
 } // namespace fx_collection

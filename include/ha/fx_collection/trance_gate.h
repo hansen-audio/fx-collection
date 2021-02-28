@@ -114,7 +114,7 @@ public:
 
     trance_gate();
 
-    void process(const float_vector& in, float_vector& out);
+    void process(const vector_float& in, vector_float& out);
     void set_sample_rate(float_t value);
     void set_tempo(float_t value);
     void trigger(float_t delayLength = float_t(0.), float_t withFadeIn = float_t(0.));
