@@ -110,7 +110,7 @@ public:
     using step_value           = std::vector<float_t>;
     using channel_steps_list   = std::vector<step_value>;
     using contour_filters_list = std::vector<contour_filter::context_data>;
-    using step_pos             = std::pair<i32, i32>;
+    using step_pos             = std::pair<i32, i32>; // current_step, step_count
 
     trance_gate();
 

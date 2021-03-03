@@ -116,22 +116,23 @@ void trance_gate::reset()
 //------------------------------------------------------------------------
 void trance_gate::process(const vector_float& in, vector_float& out)
 {
-    if (is_delay_active && !delay_phase.update_one_shot(delay_phase_value, ONE_SAMPLE))
+    // When delay is active and delay_phase has not yet overflown, just pass through.
+    bool const is_overflow = delay_phase.update_one_shot(delay_phase_value, ONE_SAMPLE);
+    if (is_delay_active && !is_overflow)
     {
         out = in;
         return;
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    auto value_le = channel_steps.at(L).at(step.first);
-    auto value_ri = channel_steps.at(ch).at(step.first);
+    float_t value_le = channel_steps.at(L).at(step.first);
+    float_t value_ri = channel_steps.at(ch).at(step.first);
 
-    apply_width(value_le, value_ri, width); //! Width
-    apply_contour(value_le, value_ri,
-                  contour_filters); //! The filters smooth everything, cracklefree.
-
-    auto tmp_mix = is_fade_in_active ? mix * fade_in_phase_value : mix;
-    apply_mix(value_le, value_ri, tmp_mix); //! Mix must be applied last
+    // Keep order here. Mix must be applied last. The filters smooth everything, cracklefree.
+    apply_width(value_le, value_ri, width);
+    apply_contour(value_le, value_ri, contour_filters);
+    const float_t tmp_mix = is_fade_in_active ? mix * fade_in_phase_value : mix;
+    apply_mix(value_le, value_ri, tmp_mix);
 
     out[L] = in[L] * value_le;
     out[R] = in[R] * value_ri;
@@ -143,7 +144,10 @@ void trance_gate::process(const vector_float& in, vector_float& out)
 void trance_gate::update_phases()
 {
     fade_in_phase.update_one_shot(fade_in_phase_value, ONE_SAMPLE);
-    if (step_phase.update(step_phase_value, ONE_SAMPLE))
+
+    // When step_phase has overflown, increment step.
+    bool const is_overflow = step_phase.update(step_phase_value, ONE_SAMPLE);
+    if (is_overflow)
         ++step;
 }
 
