@@ -6,6 +6,8 @@ namespace ha {
 namespace fx_collection {
 
 //------------------------------------------------------------------------
+static constexpr i32 ONE_SAMPLE = 1;
+//------------------------------------------------------------------------
 static void apply_width(float_t& value_le, float_t& value_ri, float_t width)
 {
     value_le = std::max(value_le, value_ri * width);
@@ -114,7 +116,7 @@ void trance_gate::reset()
 //------------------------------------------------------------------------
 void trance_gate::process(const vector_float& in, vector_float& out)
 {
-    if (is_delay_active && !delay_phase.update_one_shot(delay_phase_value, 1))
+    if (is_delay_active && !delay_phase.update_one_shot(delay_phase_value, ONE_SAMPLE))
     {
         out = in;
         return;
@@ -140,8 +142,8 @@ void trance_gate::process(const vector_float& in, vector_float& out)
 //------------------------------------------------------------------------
 void trance_gate::update_phases()
 {
-    fade_in_phase.update_one_shot(fade_in_phase_value, 1);
-    if (step_phase.update(step_phase_value, 1))
+    fade_in_phase.update_one_shot(fade_in_phase_value, ONE_SAMPLE);
+    if (step_phase.update(step_phase_value, ONE_SAMPLE))
         ++step;
 }
 
