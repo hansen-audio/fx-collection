@@ -77,10 +77,10 @@ void trance_gate::trigger(float_t delay_length, float_t fade_in_length)
     set_delay(delay_length);
     set_fade_in(fade_in_length);
 
-    delay_phase.reset_one_shot();
-    fade_in_phase.reset_one_shot();
-    step_phase.reset();
-    step.first = 0;
+    delay_phase_value   = float_t(0.);
+    fade_in_phase_value = float_t(0.);
+    step_phase_value    = float_t(0.);
+    step.first          = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
         in release playing back. Dann bricht auf einmal Audio weg wenn wir
@@ -114,7 +114,7 @@ void trance_gate::reset()
 //------------------------------------------------------------------------
 void trance_gate::process(const vector_float& in, vector_float& out)
 {
-    if (is_delay_active && !delay_phase.update_one_shot(1))
+    if (is_delay_active && !delay_phase.update_one_shot(delay_phase_value, 1))
     {
         out = in;
         return;
@@ -128,7 +128,7 @@ void trance_gate::process(const vector_float& in, vector_float& out)
     apply_contour(value_le, value_ri,
                   contour_filters); //! The filters smooth everything, cracklefree.
 
-    auto tmp_mix = is_fade_in_active ? mix * fade_in_phase.get_one_shot_phase() : mix;
+    auto tmp_mix = is_fade_in_active ? mix * fade_in_phase_value : mix;
     apply_mix(value_le, value_ri, tmp_mix); //! Mix must be applied last
 
     out[L] = in[L] * value_le;
@@ -140,8 +140,8 @@ void trance_gate::process(const vector_float& in, vector_float& out)
 //------------------------------------------------------------------------
 void trance_gate::update_phases()
 {
-    fade_in_phase.update_one_shot(1);
-    if (step_phase.update(1))
+    fade_in_phase.update_one_shot(fade_in_phase_value, 1);
+    if (step_phase.update(step_phase_value, 1))
         ++step;
 }
 

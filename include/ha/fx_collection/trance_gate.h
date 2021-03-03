@@ -146,6 +146,9 @@ private:
     ha::dtb::modulation::one_shot_phase delay_phase;
     ha::dtb::modulation::one_shot_phase fade_in_phase;
     ha::dtb::modulation::phase step_phase;
+    float_t delay_phase_value   = float_t(0.);
+    float_t step_phase_value    = float_t(0.);
+    float_t fade_in_phase_value = float_t(0.);
 
     step_pos step;
     float_t mix     = float_t(1.);
