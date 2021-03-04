@@ -58,16 +58,15 @@ trance_gate::trance_gate()
     constexpr float_t TEMPO_BPM = float_t(120.);
 
     delay_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    delay_phase.set_tempo(TEMPO_BPM);
     delay_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
 
     fade_in_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    fade_in_phase.set_tempo(TEMPO_BPM);
     fade_in_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
 
     step_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    step_phase.set_tempo(TEMPO_BPM);
     step_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+
+    set_tempo(TEMPO_BPM);
 }
 
 //------------------------------------------------------------------------
