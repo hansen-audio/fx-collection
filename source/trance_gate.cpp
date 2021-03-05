@@ -32,8 +32,10 @@ static void apply_mix(float_t& value_le, float_t& value_ri, float_t mix)
 static void
 apply_contour(float_t& value_le, float_t& value_ri, trance_gate::contour_filters_list& contour)
 {
-    value_le = contour_filter::process(value_le, contour.at(trance_gate::L));
-    value_ri = contour_filter::process(value_ri, contour.at(trance_gate::R));
+    namespace filtering = ha::dtb::filtering;
+
+    value_le = filtering::one_pole_filter::process(value_le, contour.at(trance_gate::L));
+    value_ri = filtering::one_pole_filter::process(value_ri, contour.at(trance_gate::R));
 }
 
 //------------------------------------------------------------------------
@@ -108,7 +110,8 @@ void trance_gate::reset()
     float_t resetValue = is_delay_active ? float_t(1.) : float_t(0.);
     for (auto& filter : contour_filters)
     {
-        contour_filter::reset(resetValue, filter);
+        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(resetValue, sample_rate);
+        dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
 
@@ -156,9 +159,13 @@ void trance_gate::set_sample_rate(float_t value)
     delay_phase.set_sample_rate(value);
     fade_in_phase.set_sample_rate(value);
     step_phase.set_sample_rate(value);
+
+    sample_rate = value;
+
     for (auto& filter : contour_filters)
     {
-        contour_filter::update_sample_rate(value, filter);
+        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
+        dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
 
@@ -208,7 +215,8 @@ void trance_gate::set_contour(float_t value)
     contour = value;
     for (auto& filter : contour_filters)
     {
-        contour_filter::set_time(value, filter);
+        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(value, sample_rate);
+        dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
 
