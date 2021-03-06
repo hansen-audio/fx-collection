@@ -54,7 +54,7 @@ trance_gate::trance_gate()
     contour_filters.resize(NUM_CHANNELS);
     channel_steps.resize(NUM_CHANNELS);
     for (auto& step : channel_steps)
-        step.resize(NUM_STEPS, float_t(0.));
+        step.resize(MAX_NUM_STEPS, float_t(0.));
 
     constexpr float_t ONE_32TH  = float_t(1. / 32.);
     constexpr float_t TEMPO_BPM = float_t(120.);
@@ -203,7 +203,10 @@ void trance_gate::set_tempo(float_t value)
 //------------------------------------------------------------------------
 void trance_gate::set_step_count(i32 value)
 {
+    constexpr i32 MIN_NUM_STEPS = 1;
+
     step.second = value;
+    step.second = std::clamp(step.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
 }
 
 //------------------------------------------------------------------------

@@ -18,10 +18,10 @@ class trance_gate
 {
 public:
     //--------------------------------------------------------------------
-    static constexpr i32 NUM_CHANNELS = 2;
-    static constexpr i32 NUM_STEPS    = 32;
-    static constexpr i32 L            = 0;
-    static constexpr i32 R            = 1;
+    static constexpr i32 NUM_CHANNELS  = 2;
+    static constexpr i32 MAX_NUM_STEPS = 32;
+    static constexpr i32 L             = 0;
+    static constexpr i32 R             = 1;
 
     using step_value           = std::vector<float_t>;
     using channel_steps_list   = std::vector<step_value>;
