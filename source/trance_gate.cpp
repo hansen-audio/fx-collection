@@ -1,12 +1,14 @@
 // Copyright(c) 2016 René Hansen.
 
 #include "ha/fx_collection/trance_gate.h"
+#include <algorithm>
 
 namespace ha {
 namespace fx_collection {
 
 //------------------------------------------------------------------------
 static constexpr i32 ONE_SAMPLE = 1;
+
 //------------------------------------------------------------------------
 static void apply_width(float_t& value_le, float_t& value_ri, float_t width)
 {
@@ -107,10 +109,10 @@ void trance_gate::reset()
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    float_t resetValue = is_delay_active ? float_t(1.) : float_t(0.);
+    float_t const reset_value = is_delay_active ? float_t(1.) : float_t(0.);
+    float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(reset_value, sample_rate);
     for (auto& filter : contour_filters)
     {
-        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(resetValue, sample_rate);
         dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
@@ -170,15 +172,15 @@ void trance_gate::set_sample_rate(float_t value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step(i32 channel, i32 step, float_t value)
+void trance_gate::set_step(i32 channel, i32 step, float_t value_normalised)
 {
     channel_steps.at(channel).at(step) = value;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_width(float_t value)
+void trance_gate::set_width(float_t value_normalised)
 {
-    width = float_t(1.) - value;
+    width = float_t(1.) - value_normalised;
 }
 
 //------------------------------------------------------------------------
@@ -188,9 +190,9 @@ void trance_gate::set_stereo_mode(bool value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_length(float_t value)
+void trance_gate::set_step_length(float_t value_note_length)
 {
-    step_phase.set_note_length(value);
+    step_phase.set_note_length(value_note_length);
 }
 //------------------------------------------------------------------------
 void trance_gate::set_tempo(float_t value)
@@ -210,15 +212,15 @@ void trance_gate::set_step_count(i32 value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_contour(float_t value)
+void trance_gate::set_contour(float_t value_seconds)
 {
-    if (contour == value)
+    if (contour == value_seconds)
         return;
 
-    contour = value;
+    contour = value_seconds;
     for (auto& filter : contour_filters)
     {
-        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(value, sample_rate);
+        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
         dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
