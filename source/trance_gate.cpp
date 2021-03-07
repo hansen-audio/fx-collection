@@ -174,7 +174,7 @@ void trance_gate::set_sample_rate(float_t value)
 //------------------------------------------------------------------------
 void trance_gate::set_step(i32 channel, i32 step, float_t value_normalised)
 {
-    channel_steps.at(channel).at(step) = value;
+    channel_steps.at(channel).at(step) = value_normalised;
 }
 
 //------------------------------------------------------------------------
