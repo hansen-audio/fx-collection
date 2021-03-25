@@ -4,38 +4,42 @@ include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
 
-project(ha-effect-collection)
+project(ha-fx-collection)
 
 add_subdirectory(external)
 
-add_library(effect-collection STATIC
+add_library(fx-collection STATIC
     include/ha/fx_collection/types.h
     include/ha/fx_collection/trance_gate.h
     source/trance_gate.cpp
 )
 
-target_link_libraries(effect-collection 
+target_link_libraries(fx-collection 
     PUBLIC
         dsp-tool-box
-        # aligned-allocator
 )
 
-target_include_directories(effect-collection
+target_include_directories(fx-collection
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/source
 )
 
+target_compile_features(fx-collection
+    PUBLIC
+        cxx_std_17
+)
+
 enable_testing()
 
-add_executable(effect-collection_test
+add_executable(fx-collection_test
     test/trance_gate_test.cpp
 )
 
-target_link_libraries(effect-collection_test
+target_link_libraries(fx-collection_test
     PRIVATE
-        effect-collection
+        fx-collection
         gtest
         gtest_main
 )
