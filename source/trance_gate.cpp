@@ -10,21 +10,21 @@ namespace fx_collection {
 static constexpr i32 ONE_SAMPLE = 1;
 
 //------------------------------------------------------------------------
-static void apply_width(float_t& value_le, float_t& value_ri, float_t width)
+static void apply_width(real_t& value_le, real_t& value_ri, real_t width)
 {
     value_le = std::max(value_le, value_ri * width);
     value_ri = std::max(value_ri, value_le * width);
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(float_t& value, float_t mix)
+static void apply_mix(real_t& value, real_t mix)
 {
-    static constexpr float_t MIX_MAX = float_t(1.);
-    value                            = (MIX_MAX - mix) + value * mix;
+    static constexpr real_t MIX_MAX = real_t(1.);
+    value                           = (MIX_MAX - mix) + value * mix;
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(float_t& value_le, float_t& value_ri, float_t mix)
+static void apply_mix(real_t& value_le, real_t& value_ri, real_t mix)
 {
     apply_mix(value_le, mix);
     apply_mix(value_ri, mix);
@@ -32,7 +32,7 @@ static void apply_mix(float_t& value_le, float_t& value_ri, float_t mix)
 
 //------------------------------------------------------------------------
 static void
-apply_contour(float_t& value_le, float_t& value_ri, trance_gate::contour_filters_list& contour)
+apply_contour(real_t& value_le, real_t& value_ri, trance_gate::contour_filters_list& contour)
 {
     namespace filtering = ha::dtb::filtering;
 
@@ -56,10 +56,10 @@ trance_gate::trance_gate()
     contour_filters.resize(NUM_CHANNELS);
     channel_steps.resize(NUM_CHANNELS);
     for (auto& step : channel_steps)
-        step.resize(MAX_NUM_STEPS, float_t(0.));
+        step.resize(MAX_NUM_STEPS, real_t(0.));
 
-    constexpr float_t ONE_32TH  = float_t(1. / 32.);
-    constexpr float_t TEMPO_BPM = float_t(120.);
+    constexpr real_t ONE_32TH  = real_t(1. / 32.);
+    constexpr real_t TEMPO_BPM = real_t(120.);
 
     delay_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
     delay_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
@@ -74,7 +74,7 @@ trance_gate::trance_gate()
 }
 
 //------------------------------------------------------------------------
-void trance_gate::trigger(float_t delay_length, float_t fade_in_length)
+void trance_gate::trigger(real_t delay_length, real_t fade_in_length)
 {
     //! Delay and FadeIn time can only be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
@@ -82,9 +82,9 @@ void trance_gate::trigger(float_t delay_length, float_t fade_in_length)
     set_delay(delay_length);
     set_fade_in(fade_in_length);
 
-    delay_phase_value   = float_t(0.);
-    fade_in_phase_value = float_t(0.);
-    step_phase_value    = float_t(0.);
+    delay_phase_value   = real_t(0.);
+    fade_in_phase_value = real_t(0.);
+    step_phase_value    = real_t(0.);
     step.first          = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
@@ -109,8 +109,8 @@ void trance_gate::reset()
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    float_t const reset_value = is_delay_active ? float_t(1.) : float_t(0.);
-    float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(reset_value, sample_rate);
+    real_t const reset_value = is_delay_active ? real_t(1.) : real_t(0.);
+    real_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(reset_value, sample_rate);
     for (auto& filter : contour_filters)
     {
         dtb::filtering::one_pole_filter::update_pole(pole, filter);
@@ -118,7 +118,7 @@ void trance_gate::reset()
 }
 
 //------------------------------------------------------------------------
-void trance_gate::process(const vector_float& in, vector_float& out)
+void trance_gate::process(audio_frame_t const& in, audio_frame_t& out)
 {
     // When delay is active and delay_phase has not yet overflown, just pass through.
     bool const is_overflow = delay_phase.update_one_shot(delay_phase_value, ONE_SAMPLE);
@@ -129,13 +129,13 @@ void trance_gate::process(const vector_float& in, vector_float& out)
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    float_t value_le = channel_steps.at(L).at(step.first);
-    float_t value_ri = channel_steps.at(ch).at(step.first);
+    real_t value_le = channel_steps.at(L).at(step.first);
+    real_t value_ri = channel_steps.at(ch).at(step.first);
 
     // Keep order here. Mix must be applied last. The filters smooth everything, cracklefree.
     apply_width(value_le, value_ri, width);
     apply_contour(value_le, value_ri, contour_filters);
-    const float_t tmp_mix = is_fade_in_active ? mix * fade_in_phase_value : mix;
+    real_t const tmp_mix = is_fade_in_active ? mix * fade_in_phase_value : mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
     out[L] = in[L] * value_le;
@@ -156,7 +156,7 @@ void trance_gate::update_phases()
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_sample_rate(float_t value)
+void trance_gate::set_sample_rate(real_t value)
 {
     delay_phase.set_sample_rate(value);
     fade_in_phase.set_sample_rate(value);
@@ -166,21 +166,21 @@ void trance_gate::set_sample_rate(float_t value)
 
     for (auto& filter : contour_filters)
     {
-        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
+        real_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
         dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step(i32 channel, i32 step, float_t value_normalised)
+void trance_gate::set_step(i32 channel, i32 step, real_t value_normalised)
 {
     channel_steps.at(channel).at(step) = value_normalised;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_width(float_t value_normalised)
+void trance_gate::set_width(real_t value_normalised)
 {
-    width = float_t(1.) - value_normalised;
+    width = real_t(1.) - value_normalised;
 }
 
 //------------------------------------------------------------------------
@@ -190,12 +190,12 @@ void trance_gate::set_stereo_mode(bool value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_length(float_t value_note_length)
+void trance_gate::set_step_length(real_t value_note_length)
 {
     step_phase.set_note_length(value_note_length);
 }
 //------------------------------------------------------------------------
-void trance_gate::set_tempo(float_t value)
+void trance_gate::set_tempo(real_t value)
 {
     delay_phase.set_tempo(value);
     fade_in_phase.set_tempo(value);
@@ -212,7 +212,7 @@ void trance_gate::set_step_count(i32 value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_contour(float_t value_seconds)
+void trance_gate::set_contour(real_t value_seconds)
 {
     if (contour == value_seconds)
         return;
@@ -220,15 +220,15 @@ void trance_gate::set_contour(float_t value_seconds)
     contour = value_seconds;
     for (auto& filter : contour_filters)
     {
-        float_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
+        real_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
         dtb::filtering::one_pole_filter::update_pole(pole, filter);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_fade_in(float_t value)
+void trance_gate::set_fade_in(real_t value)
 {
-    is_fade_in_active = value > float_t(0.);
+    is_fade_in_active = value > real_t(0.);
     if (!is_fade_in_active)
         return;
 
@@ -236,9 +236,9 @@ void trance_gate::set_fade_in(float_t value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_delay(float_t value)
+void trance_gate::set_delay(real_t value)
 {
-    is_delay_active = value > float_t(0.);
+    is_delay_active = value > real_t(0.);
     if (!is_delay_active)
         return;
 
