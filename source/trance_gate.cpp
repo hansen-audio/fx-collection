@@ -166,6 +166,7 @@ void trance_gate::update_phases()
 void trance_gate::set_sample_rate(real_t value)
 {
     using phs = ha::dtb::modulation::phase;
+    using opf = dtb::filtering::one_pole_filter;
 
     phs::set_sample_rate(delay_phase, value);
     phs::set_sample_rate(fade_in_phase, value);
@@ -175,8 +176,8 @@ void trance_gate::set_sample_rate(real_t value)
 
     for (auto& filter : contour_filters)
     {
-        real_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
-        dtb::filtering::one_pole_filter::update_pole(pole, filter);
+        real_t const pole = opf::tau_to_pole(contour, sample_rate);
+        opf::update_pole(pole, filter);
     }
 }
 
@@ -227,14 +228,16 @@ void trance_gate::set_step_count(i32 value)
 //------------------------------------------------------------------------
 void trance_gate::set_contour(real_t value_seconds)
 {
+    using opf = dtb::filtering::one_pole_filter;
+
     if (contour == value_seconds)
         return;
 
     contour = value_seconds;
     for (auto& filter : contour_filters)
     {
-        real_t const pole = dtb::filtering::one_pole_filter::tau_to_pole(contour, sample_rate);
-        dtb::filtering::one_pole_filter::update_pole(pole, filter);
+        real_t const pole = opf::tau_to_pole(contour, sample_rate);
+        opf::update_pole(pole, filter);
     }
 }
 
