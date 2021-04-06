@@ -34,10 +34,10 @@ static void apply_mix(real_t& value_le, real_t& value_ri, real_t mix)
 static void
 apply_contour(real_t& value_le, real_t& value_ri, trance_gate::contour_filters_list& contour)
 {
-    namespace filtering = ha::dtb::filtering;
+    using opf = dtb::filtering::one_pole_filter;
 
-    value_le = filtering::one_pole_filter::process(value_le, contour.at(trance_gate::L));
-    value_ri = filtering::one_pole_filter::process(value_ri, contour.at(trance_gate::R));
+    value_le = opf::process(value_le, contour.at(trance_gate::L));
+    value_ri = opf::process(value_ri, contour.at(trance_gate::R));
 }
 
 //------------------------------------------------------------------------
@@ -53,6 +53,8 @@ static void operator++(trance_gate::step_pos& step)
 //------------------------------------------------------------------------
 trance_gate::trance_gate()
 {
+    using phs = ha::dtb::modulation::phase;
+
     contour_filters.resize(NUM_CHANNELS);
     channel_steps.resize(NUM_CHANNELS);
     for (auto& step : channel_steps)
@@ -61,14 +63,14 @@ trance_gate::trance_gate()
     constexpr real_t ONE_32TH  = real_t(1. / 32.);
     constexpr real_t TEMPO_BPM = real_t(120.);
 
-    delay_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    delay_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    phs::set_rate(delay_phase, phs::note_length_to_rate(ONE_32TH));
+    phs::set_mode(delay_phase, phs::MODE_TEMPO_SYNC);
 
-    fade_in_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    fade_in_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    phs::set_rate(fade_in_phase, phs::note_length_to_rate(ONE_32TH));
+    phs::set_mode(fade_in_phase, phs::MODE_TEMPO_SYNC);
 
-    step_phase.set_rate(ha::dtb::modulation::phase::note_length_to_rate(ONE_32TH));
-    step_phase.set_mode(ha::dtb::modulation::phase::MODE_TEMPO_SYNC);
+    phs::set_rate(step_phase, phs::note_length_to_rate(ONE_32TH));
+    phs::set_mode(step_phase, phs::MODE_TEMPO_SYNC);
 
     set_tempo(TEMPO_BPM);
 }
@@ -120,8 +122,10 @@ void trance_gate::reset()
 //------------------------------------------------------------------------
 void trance_gate::process(audio_frame_t const& in, audio_frame_t& out)
 {
+    using osp = ha::dtb::modulation::one_shot_phase;
+
     // When delay is active and delay_phase has not yet overflown, just pass through.
-    bool const is_overflow = delay_phase.update_one_shot(delay_phase_value, ONE_SAMPLE);
+    bool const is_overflow = osp::update_one_shot(delay_phase, delay_phase_value, ONE_SAMPLE);
     if (is_delay_active && !is_overflow)
     {
         out = in;
@@ -147,10 +151,13 @@ void trance_gate::process(audio_frame_t const& in, audio_frame_t& out)
 //------------------------------------------------------------------------
 void trance_gate::update_phases()
 {
-    fade_in_phase.update_one_shot(fade_in_phase_value, ONE_SAMPLE);
+    using osp = ha::dtb::modulation::one_shot_phase;
+    using phs = ha::dtb::modulation::phase;
+
+    osp::update_one_shot(fade_in_phase, fade_in_phase_value, ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
-    bool const is_overflow = step_phase.update(step_phase_value, ONE_SAMPLE);
+    bool const is_overflow = phs::update(step_phase, step_phase_value, ONE_SAMPLE);
     if (is_overflow)
         ++step;
 }
@@ -158,9 +165,11 @@ void trance_gate::update_phases()
 //------------------------------------------------------------------------
 void trance_gate::set_sample_rate(real_t value)
 {
-    delay_phase.set_sample_rate(value);
-    fade_in_phase.set_sample_rate(value);
-    step_phase.set_sample_rate(value);
+    using phs = ha::dtb::modulation::phase;
+
+    phs::set_sample_rate(delay_phase, value);
+    phs::set_sample_rate(fade_in_phase, value);
+    phs::set_sample_rate(step_phase, value);
 
     sample_rate = value;
 
@@ -192,14 +201,18 @@ void trance_gate::set_stereo_mode(bool value)
 //------------------------------------------------------------------------
 void trance_gate::set_step_length(real_t value_note_length)
 {
-    step_phase.set_note_length(value_note_length);
+    using phs = ha::dtb::modulation::phase;
+
+    phs::set_note_length(step_phase, value_note_length);
 }
 //------------------------------------------------------------------------
 void trance_gate::set_tempo(real_t value)
 {
-    delay_phase.set_tempo(value);
-    fade_in_phase.set_tempo(value);
-    step_phase.set_tempo(value);
+    using phs = ha::dtb::modulation::phase;
+
+    phs::set_tempo(delay_phase, value);
+    phs::set_tempo(fade_in_phase, value);
+    phs::set_tempo(step_phase, value);
 }
 
 //------------------------------------------------------------------------
@@ -228,21 +241,25 @@ void trance_gate::set_contour(real_t value_seconds)
 //------------------------------------------------------------------------
 void trance_gate::set_fade_in(real_t value)
 {
+    using phs = ha::dtb::modulation::phase;
+
     is_fade_in_active = value > real_t(0.);
     if (!is_fade_in_active)
         return;
 
-    fade_in_phase.set_note_length(value);
+    phs::set_note_length(fade_in_phase, value);
 }
 
 //------------------------------------------------------------------------
 void trance_gate::set_delay(real_t value)
 {
+    using phs = ha::dtb::modulation::phase;
+
     is_delay_active = value > real_t(0.);
     if (!is_delay_active)
         return;
 
-    delay_phase.set_note_length(value);
+    phs::set_note_length(delay_phase, value);
 }
 
 //------------------------------------------------------------------------
