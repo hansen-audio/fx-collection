@@ -3,7 +3,6 @@
 #pragma once
 
 #include "ha/dsp_tool_box/filtering/one_pole.h"
-#include "ha/dsp_tool_box/modulation/adsr_envelope.h"
 #include "ha/dsp_tool_box/modulation/modulation_phase.h"
 #include "ha/fx_collection/types.h"
 #include <vector>
