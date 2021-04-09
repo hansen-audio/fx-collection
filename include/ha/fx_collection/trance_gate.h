@@ -65,7 +65,7 @@ public:
     /**
      * @brief Processes one audio frame (4 channels).
      */
-    static void process(context& ctx, audio_frame_t const& in, audio_frame_t& out);
+    static void process(context& ctx, audio_frame const& in, audio_frame& out);
 
     /**
      * @brief Sets the sample rate in Hz.

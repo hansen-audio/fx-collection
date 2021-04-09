@@ -124,7 +124,7 @@ void trance_gate::reset(context& ctx)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::process(context& ctx, audio_frame_t const& in, audio_frame_t& out)
+void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 {
     using osp = ha::dtb::modulation::one_shot_phase;
 
