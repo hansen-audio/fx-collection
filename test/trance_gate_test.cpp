@@ -11,7 +11,8 @@ namespace {
 //-----------------------------------------------------------------------------
 TEST(trance_gate_test, test_instantiation)
 {
-    trance_gate gate;
+    auto tg_context = trance_gate::create();
+    trance_gate::set_mix(tg_context, 1.);
 }
 
 //-----------------------------------------------------------------------------
