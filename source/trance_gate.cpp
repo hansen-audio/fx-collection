@@ -53,7 +53,7 @@ static void operator++(trance_gate::step_pos& step)
 //------------------------------------------------------------------------
 trance_gate::context trance_gate::create()
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
 
     context ctx;
 
@@ -126,7 +126,7 @@ void trance_gate::reset(context& ctx)
 //------------------------------------------------------------------------
 void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 {
-    using osp = ha::dtb::modulation::one_shot_phase;
+    using osp = dtb::modulation::one_shot_phase;
 
     // When delay is active and delay_phase has not yet overflown, just pass through.
     bool const is_overflow =
@@ -156,8 +156,8 @@ void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 //------------------------------------------------------------------------
 void trance_gate::update_phases(context& ctx)
 {
-    using osp = ha::dtb::modulation::one_shot_phase;
-    using phs = ha::dtb::modulation::phase;
+    using osp = dtb::modulation::one_shot_phase;
+    using phs = dtb::modulation::phase;
 
     osp::update_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
 
@@ -170,7 +170,7 @@ void trance_gate::update_phases(context& ctx)
 //------------------------------------------------------------------------
 void trance_gate::set_sample_rate(context& ctx, real value)
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
     using opf = dtb::filtering::one_pole_filter;
 
     phs::set_sample_rate(ctx.delay_phase_ctx, value);
@@ -207,14 +207,14 @@ void trance_gate::set_stereo_mode(context& ctx, bool value)
 //------------------------------------------------------------------------
 void trance_gate::set_step_length(context& ctx, real value_note_length)
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
 
     phs::set_note_length(ctx.step_phase_ctx, value_note_length);
 }
 //------------------------------------------------------------------------
 void trance_gate::set_tempo(context& ctx, real value)
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
 
     phs::set_tempo(ctx.delay_phase_ctx, value);
     phs::set_tempo(ctx.fade_in_phase_ctx, value);
@@ -247,7 +247,7 @@ void trance_gate::set_contour(context& ctx, real value_seconds)
 //------------------------------------------------------------------------
 void trance_gate::set_fade_in(context& ctx, real value)
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
 
     ctx.is_fade_in_active = value > real(0.);
     if (!ctx.is_fade_in_active)
@@ -259,7 +259,7 @@ void trance_gate::set_fade_in(context& ctx, real value)
 //------------------------------------------------------------------------
 void trance_gate::set_delay(context& ctx, real value)
 {
-    using phs = ha::dtb::modulation::phase;
+    using phs = dtb::modulation::phase;
 
     ctx.is_delay_active = value > real(0.);
     if (!ctx.is_delay_active)
