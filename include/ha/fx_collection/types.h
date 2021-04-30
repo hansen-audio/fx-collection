@@ -17,9 +17,12 @@ using mut_real = std::remove_const<real>::type;
 
 using audio_sample = mut_real;
 
-constexpr std::size_t NUM_CHANNELS        = 4;
-constexpr std::size_t BYTE_ALIGNMENT      = 16;
-using audio_frame alignas(BYTE_ALIGNMENT) = std::array<audio_sample, NUM_CHANNELS>;
+constexpr std::size_t NUM_CHANNELS   = 4;
+constexpr std::size_t BYTE_ALIGNMENT = 16;
+struct audio_frame
+{
+    alignas(BYTE_ALIGNMENT) std::array<audio_sample, NUM_CHANNELS> data;
+};
 
 constexpr audio_frame zero_audio_frame{0., 0., 0., 0.};
 

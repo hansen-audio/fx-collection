@@ -147,8 +147,8 @@ void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
     real tmp_mix = ctx.is_fade_in_active ? ctx.mix * ctx.fade_in_phase_val : ctx.mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
-    out[L] = in[L] * value_le;
-    out[R] = in[R] * value_ri;
+    out.data[L] = in.data[L] * value_le;
+    out.data[R] = in.data[R] * value_ri;
 
     update_phases(ctx);
 }

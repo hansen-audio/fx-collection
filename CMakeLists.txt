@@ -35,6 +35,7 @@ enable_testing()
 
 add_executable(fx-collection_test
     test/trance_gate_test.cpp
+    test/array_alignment_test.cpp
 )
 
 target_link_libraries(fx-collection_test
