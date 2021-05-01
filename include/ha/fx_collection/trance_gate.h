@@ -5,6 +5,7 @@
 #include "ha/dsp_tool_box/filtering/one_pole.h"
 #include "ha/dsp_tool_box/modulation/modulation_phase.h"
 #include "ha/fx_collection/types.h"
+#include <array>
 #include <vector>
 
 namespace ha {
@@ -24,10 +25,11 @@ public:
     static constexpr i32 L             = 0;
     static constexpr i32 R             = 1;
 
-    using step_values          = std::vector<mut_real>;
-    using channel_steps_list   = std::vector<step_values>;
-    using contour_filters_list = std::vector<dtb::filtering::one_pole_filter::context_data>;
-    using step_pos             = std::pair<mut_i32, mut_i32>; // current_step, step_count
+    using step_values        = std::array<mut_real, MAX_NUM_STEPS>;
+    using channel_steps_list = std::array<step_values, NUM_CHANNELS>;
+    using contour_filters_list =
+        std::array<dtb::filtering::one_pole_filter::context_data, NUM_CHANNELS>;
+    using step_pos = std::pair<mut_i32, mut_i32>; // current_step, step_count
 
     struct context
     {

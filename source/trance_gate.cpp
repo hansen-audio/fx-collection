@@ -57,11 +57,6 @@ trance_gate::context trance_gate::create()
 
     context ctx;
 
-    ctx.contour_filters.resize(NUM_CHANNELS);
-    ctx.channel_steps.resize(NUM_CHANNELS);
-    for (auto& step : ctx.channel_steps)
-        step.resize(MAX_NUM_STEPS, 0);
-
     constexpr real ONE_32TH = real(1. / 32.);
 
     phs::set_rate(ctx.delay_phase_ctx, phs::note_length_to_rate(ONE_32TH));
