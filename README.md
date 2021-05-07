@@ -1,57 +1,51 @@
-# Parameter Tool Box
-[![Linux Build](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_linux.yml/badge.svg)](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_linux.yml) [![macOS Build](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_macos.yml/badge.svg)](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_macos.yml) [![Windows Build](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_windows.yml/badge.svg)](https://github.com/hansen-audio/param-tool-box/actions/workflows/cmake_windows.yml)
+# FX Colletion Library
 
-A tool box for parameter and value processing.
+## Motivation
+
+This library combines basic classes from dsp-tool-box to audio effects. The trance gate effect for example uses three modulation phases and a one pole filter from the dsp-tool-box. 
 
 ## Building the project
 
 Execute the following commands on cli.
 
 ```
-git clone /path/to/param-tool-box.git
+git clone https://www.github.com/hansen-audio/fx-collection.git
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ../param-tool-box
+cmake -DCMAKE_BUILD_TYPE=Debug ../fx-collection
 cmake --build .
 ```
 
-> Linux: ```cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ../param-tool-box```
-> macOS:```cmake -GXcode ../param-tool-box```
-> Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ..\param-tool-box```
+### CMake Generators
 
-## Using the tools and examples
+> Linux: ```cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ...```
+> macOS:```cmake -GXcode ...```
+> Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ...```
 
-### Ramp processor
+## Using the modules
 
-The ```ptb::ramp_processor``` can take a list of automation curve points and interpolate between them. This allows sample accurate automation curve processing. By providing it a lambda function to retrieve the automation curve points, the class is not bound to any list implementation.
+All module classes in this library contain a ```context``` and ```static``` methods in order to modify the ```context```. Like this the data and the algorithm are separated and allow a usage in a multithreaded environment.
 
-In order to use it with ```Vst::IParamValueQueue```, do as follows:
+### Using the trance gate
+
+Use the ```trance_gate::create``` method in order to get a valid ```context```. Afterwards use the ```static``` methods like ```set_mix``` to modify this ```context```.
 
 ```
-Steinberg::tresult MyPlugin::process(Vst::ProcessData & data)
-{
-    auto* queue = findParamValueQueue(kParamGainId, data.inputParameterChanges);
-    ptb::ramp_processor gainProc(
-        [queue](int index, int& offset, float& value) -> bool {
-            if (index < queue->getPointCount())
-            {
-                if (queue->getPoint(index, offset, value) != kResultOk)
-                    return false;
-            }
-            return true;
-        },
-        gainValue);
+auto tg_context = ha::fx_collection::trance_gate::create();
+ha::fx_collection::trance_gate::set_mix(tg_context, 1.);
+```
 
-    if (!data.outputs || !data.inputs)
-        return kResultOk;
+In order to process the trance gate, use the ```process``` method. This method takes an input ```audio_frame``` and an output ```audio_frame```. The ```audio_frame``` struct contains an alinged buffer of four channels.
 
-    for (...)
-    {
-        (*output)++ = (*input)++ * gainProc.getValue();
+```
+auto tg_context = ha::fx_collection::trance_gate::create();
 
-        gainProc.advance();
-    }
-}
+ha::fx_collection::audio_frame input; // Insert your sample here
+ha::fx_collection::audio_frame output;
+
+ha::fx_collection::trance_gate::process(tg_context, input, output);
+
+// Use the output for further processing
 ```
 
 ## License
