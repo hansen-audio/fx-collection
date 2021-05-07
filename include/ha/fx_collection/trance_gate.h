@@ -15,7 +15,7 @@ namespace fx_collection {
 /**
  * trance_gate
  */
-class trance_gate
+class trance_gate final
 {
 public:
     //--------------------------------------------------------------------
@@ -70,12 +70,12 @@ public:
     static void process(context& ctx, audio_frame const& in, audio_frame& out);
 
     /**
-     * @brief Sets the sample rate in Hz.
+     * @brief Sets the sample rate in [Hz].
      */
     static void set_sample_rate(context& ctx, real value);
 
     /**
-     * @brief Sets the tempo in BPM.
+     * @brief Sets the tempo in [BPM].
      */
     static void set_tempo(context& ctx, real value);
 
@@ -85,8 +85,8 @@ public:
      * Both delay_len and fade_in_len can only be set when triggering the gate.
      * Changing these values during the gate is running makes no sense.
      *
-     * @param delay_len Length of delay time until the trance gate starts processing.
-     * @param fade_in_len Length of fade_in time.
+     * @param delay_len Length of delay time in [seconds] until the trance gate starts processing.
+     * @param fade_in_len Length of fade_in time in [seconds].
      */
     static void trigger(context& ctx, real delay_len = real(0.), real fade_in_len = real(0.));
 
@@ -105,7 +105,8 @@ public:
      * @brief Sets the amount of a step.
      * @param channel The channel index of the step to change
      * @param step The index of the step to change
-     * @param value [0.0 - 1.0] Defining the amount of a step, can also be just on or off
+     * @param value Defining the amount [normalised] of a step, can also be just on or
+     * off
      */
     static void set_step(context& ctx, i32 channel, i32 step, real value_normalised);
 
@@ -117,13 +118,13 @@ public:
 
     /**
      * @brief Sets the mix of the trance gate.
-     * @param value [0.0 - 1.0] Defining the amount of the trance gate
+     * @param value Defining the amount [normalised] of the trance gate
      */
     static void set_mix(context& ctx, real value) { ctx.mix = value; }
 
     /**
      * @brief Sets the contour of the trance gate.
-     * @param value [4s - 0.001s] Defining duration of attack and release slope
+     * @param value Defining duration in [seconds: 4s - 0.001s] of attack and release slope
      */
     static void set_contour(context& ctx, real value_seconds);
 
@@ -134,7 +135,7 @@ public:
 
     /**
      * @brief Sets the width of the trance gate.
-     * @param value [0.0 - 1.0] Defining the amount of stereo effect
+     * @param value Defining the amount [normalised] of stereo effect
      */
     static void set_width(context& ctx, real value_normalised);
 
