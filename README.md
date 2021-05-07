@@ -18,27 +18,32 @@ cmake --build .
 
 ### CMake Generators
 
-> Linux: ```cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ...```
-> macOS:```cmake -GXcode ...```
-> Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ...```
+CMake geneartors for all platforms.
+
+* Linux: ```cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ...```
+* macOS: ```cmake -GXcode ...```
+* Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ...```
 
 ## Using the modules
 
 All module classes in this library contain a ```context``` and ```static``` methods in order to modify the ```context```. Like this the data and the algorithm are separated and allow a usage in a multithreaded environment.
 
-### Using the trance gate
+### Setting parameters of the context
 
-Use the ```trance_gate::create``` method in order to get a valid ```context```. Afterwards use the ```static``` methods like ```set_mix``` to modify this ```context```.
+Use the ```trance_gate::create``` method in order to get a valid ```context```. Afterwards use the ```static``` methods like ```set_mix``` to modify the ```context```.
 
 ```
 auto tg_context = ha::fx_collection::trance_gate::create();
 ha::fx_collection::trance_gate::set_mix(tg_context, 1.);
 ```
 
+### Process the trance gate
+
 In order to process the trance gate, use the ```process``` method. This method takes an input ```audio_frame``` and an output ```audio_frame```. The ```audio_frame``` struct contains an alinged buffer of four channels.
 
 ```
 auto tg_context = ha::fx_collection::trance_gate::create();
+ha::fx_collection::trance_gate::set_mix(tg_context, 1.);
 
 ha::fx_collection::audio_frame input; // Insert your sample here
 ha::fx_collection::audio_frame output;
