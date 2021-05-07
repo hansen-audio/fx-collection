@@ -2,7 +2,7 @@
 
 ## Motivation
 
-This library combines basic classes from dsp-tool-box to audio effects. The trance gate effect for example uses three modulation phases and a one pole filter from the dsp-tool-box. 
+The ```fx-collection``` library combines basic classes from ```dsp-tool-box``` to audio effects. The trance gate effect for example uses three modulation phases and a one pole filter from the ```dsp-tool-box```. 
 
 ## Building the project
 
@@ -24,22 +24,28 @@ CMake geneartors for all platforms.
 * macOS: ```cmake -GXcode ...```
 * Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ...```
 
-## Using the modules
+## Effects
 
-All module classes in this library contain a ```context``` and ```static``` methods in order to modify the ```context```. Like this the data and the algorithm are separated and allow a usage in a multithreaded environment.
+Currently the following effects are avaiable:
 
-### Setting parameters of the context
+* Trance Gate
 
-Use the ```trance_gate::create``` method in order to get a valid ```context```. Afterwards use the ```static``` methods like ```set_mix``` to modify the ```context```.
+### Using the effects
+
+All effect classes in this library contain a ```context``` and ```static``` methods in order to modify the ```context```. Like this the data and the algorithm are separated and allow a usage in a multithreaded environment.
+
+#### Setting parameters of the context
+
+For the trance gate for instance, use the ```trance_gate::create``` method in order to get a valid ```context```. Afterwards use the ```static``` methods like ```set_mix``` to modify the ```context```.
 
 ```
 auto tg_context = ha::fx_collection::trance_gate::create();
 ha::fx_collection::trance_gate::set_mix(tg_context, 1.);
 ```
 
-### Process the trance gate
+#### Processing an effect
 
-In order to process the trance gate, use the ```process``` method. This method takes an input ```audio_frame``` and an output ```audio_frame```. The ```audio_frame``` struct contains an alinged buffer of four channels.
+In order to process the trance gate for instance, use the ```process``` method. This method takes an input ```audio_frame``` and an output ```audio_frame```. The ```audio_frame``` struct contains an alinged buffer of four channels.
 
 ```
 auto tg_context = ha::fx_collection::trance_gate::create();
