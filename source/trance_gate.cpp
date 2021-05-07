@@ -81,7 +81,9 @@ void trance_gate::trigger(context& ctx, real delay_length, real fade_in_length)
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
     set_delay(ctx, delay_length);
+    ctx.delay_phase_ctx.did_overflow = false;
     set_fade_in(ctx, fade_in_length);
+    ctx.fade_in_phase_ctx.did_overflow = false;
 
     ctx.delay_phase_val    = real(0.);
     ctx.fade_in_phase_val  = real(0.);
@@ -111,10 +113,9 @@ void trance_gate::reset(context& ctx)
         eines Klickens.
     */
     real reset_value = ctx.is_delay_active ? real(1.) : real(0.);
-    real pole        = dtb::filtering::one_pole_filter::tau_to_pole(reset_value, ctx.sample_rate);
     for (auto& filt_ctx : ctx.contour_filters)
     {
-        dtb::filtering::one_pole_filter::update_pole(filt_ctx, pole);
+        dtb::filtering::one_pole_filter::reset(filt_ctx, reset_value);
     }
 }
 
