@@ -36,8 +36,8 @@ apply_contour(mut_real& value_le, mut_real& value_ri, trance_gate::contour_filte
 {
     using opf = dtb::filtering::one_pole_filter;
 
-    value_le = opf::process(value_le, contour.at(trance_gate::L));
-    value_ri = opf::process(value_ri, contour.at(trance_gate::R));
+    value_le = opf::process(contour.at(trance_gate::L), value_le);
+    value_ri = opf::process(contour.at(trance_gate::R), value_ri);
 }
 
 //------------------------------------------------------------------------
@@ -112,9 +112,9 @@ void trance_gate::reset(context& ctx)
     */
     real reset_value = ctx.is_delay_active ? real(1.) : real(0.);
     real pole        = dtb::filtering::one_pole_filter::tau_to_pole(reset_value, ctx.sample_rate);
-    for (auto& filter : ctx.contour_filters)
+    for (auto& filt_ctx : ctx.contour_filters)
     {
-        dtb::filtering::one_pole_filter::update_pole(pole, filter);
+        dtb::filtering::one_pole_filter::update_pole(filt_ctx, pole);
     }
 }
 
@@ -174,10 +174,10 @@ void trance_gate::set_sample_rate(context& ctx, real value)
 
     ctx.sample_rate = value;
 
-    for (auto& filter : ctx.contour_filters)
+    for (auto& filt_ctx : ctx.contour_filters)
     {
         real pole = opf::tau_to_pole(ctx.contour, ctx.sample_rate);
-        opf::update_pole(pole, filter);
+        opf::update_pole(filt_ctx, pole);
     }
 }
 
@@ -232,10 +232,10 @@ void trance_gate::set_contour(context& ctx, real value_seconds)
         return;
 
     ctx.contour = value_seconds;
-    for (auto& filter : ctx.contour_filters)
+    for (auto& filt_ctx : ctx.contour_filters)
     {
         real pole = opf::tau_to_pole(ctx.contour, ctx.sample_rate);
-        opf::update_pole(pole, filter);
+        opf::update_pole(filt_ctx, pole);
     }
 }
 

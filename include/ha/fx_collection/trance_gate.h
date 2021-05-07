@@ -25,11 +25,10 @@ public:
     static constexpr i32 L             = 0;
     static constexpr i32 R             = 1;
 
-    using step_values        = std::array<mut_real, MAX_NUM_STEPS>;
-    using channel_steps_list = std::array<step_values, NUM_CHANNELS>;
-    using contour_filters_list =
-        std::array<dtb::filtering::one_pole_filter::context_data, NUM_CHANNELS>;
-    using step_pos = std::pair<mut_i32, mut_i32>; // current_step, step_count
+    using step_values          = std::array<mut_real, MAX_NUM_STEPS>;
+    using channel_steps_list   = std::array<step_values, NUM_CHANNELS>;
+    using contour_filters_list = std::array<dtb::filtering::one_pole_filter::context, NUM_CHANNELS>;
+    using step_pos             = std::pair<mut_i32, mut_i32>; // current_step, step_count
 
     struct context
     {
@@ -42,9 +41,9 @@ public:
             2. Fade In Phase: Dauer der TranceGate fade in Zeit
             3. Step Phase: läuft über die Dauer eines einzelnen Steps
         */
-        dtb::modulation::one_shot_phase::context_t delay_phase_ctx;
-        dtb::modulation::one_shot_phase::context_t fade_in_phase_ctx;
-        dtb::modulation::phase::context_t step_phase_ctx;
+        dtb::modulation::one_shot_phase::context delay_phase_ctx;
+        dtb::modulation::one_shot_phase::context fade_in_phase_ctx;
+        dtb::modulation::phase::context step_phase_ctx;
         mut_real delay_phase_val   = real(0.);
         mut_real step_phase_val    = real(0.);
         mut_real fade_in_phase_val = real(0.);
