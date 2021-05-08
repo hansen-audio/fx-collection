@@ -126,7 +126,7 @@ void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 
     // When delay is active and delay_phase has not yet overflown, just pass through.
     bool const is_overflow =
-        osp::update_one_shot(ctx.delay_phase_ctx, ctx.delay_phase_val, ONE_SAMPLE);
+        osp::advance_one_shot(ctx.delay_phase_ctx, ctx.delay_phase_val, ONE_SAMPLE);
     if (ctx.is_delay_active && !is_overflow)
     {
         out = in;
@@ -155,10 +155,10 @@ void trance_gate::update_phases(context& ctx)
     using osp = dtb::modulation::one_shot_phase;
     using phs = dtb::modulation::phase;
 
-    osp::update_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
+    osp::advance_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
-    bool const is_overflow = phs::update(ctx.step_phase_ctx, ctx.step_phase_val, ONE_SAMPLE);
+    bool const is_overflow = phs::advance(ctx.step_phase_ctx, ctx.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
         ++ctx.step_pos_val;
 }
