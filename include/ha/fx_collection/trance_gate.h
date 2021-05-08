@@ -41,9 +41,9 @@ public:
             2. Fade In Phase: Dauer der TranceGate fade in Zeit
             3. Step Phase: läuft über die Dauer eines einzelnen Steps
         */
-        dtb::modulation::phase::context delay_phase_ctx;
-        dtb::modulation::phase::context fade_in_phase_ctx;
-        dtb::modulation::phase::context step_phase_ctx;
+        dtb::modulation::phase::context delay_phase_cx;
+        dtb::modulation::phase::context fade_in_phase_cx;
+        dtb::modulation::phase::context step_phase_cx;
         mut_real delay_phase_val   = real(0.);
         mut_real step_phase_val    = real(0.);
         mut_real fade_in_phase_val = real(0.);
@@ -66,17 +66,17 @@ public:
     /**
      * @brief Processes one audio frame (4 channels).
      */
-    static void process(context& ctx, audio_frame const& in, audio_frame& out);
+    static void process(context& cx, audio_frame const& in, audio_frame& out);
 
     /**
      * @brief Sets the sample rate in [Hz].
      */
-    static void set_sample_rate(context& ctx, real value);
+    static void set_sample_rate(context& cx, real value);
 
     /**
      * @brief Sets the tempo in [BPM].
      */
-    static void set_tempo(context& ctx, real value);
+    static void set_tempo(context& cx, real value);
 
     /**
      * @brief Triggers the trance gate.
@@ -87,18 +87,18 @@ public:
      * @param delay_len Length of delay time in [seconds] until the trance gate starts processing.
      * @param fade_in_len Length of fade_in time in [seconds].
      */
-    static void trigger(context& ctx, real delay_len = real(0.), real fade_in_len = real(0.));
+    static void trigger(context& cx, real delay_len = real(0.), real fade_in_len = real(0.));
 
     /**
      * @brief Resets filters and values.
      */
-    static void reset(context& ctx);
+    static void reset(context& cx);
 
     /**
      * @brief Sets the pattern length in steps.
      * @param value Number of steps until repeat
      */
-    static void set_step_count(context& ctx, i32 value);
+    static void set_step_count(context& cx, i32 value);
 
     /**
      * @brief Sets the amount of a step.
@@ -107,42 +107,42 @@ public:
      * @param value Defining the amount [normalised] of a step, can also be just on or
      * off
      */
-    static void set_step(context& ctx, i32 channel, i32 step, real value_normalised);
+    static void set_step(context& cx, i32 channel, i32 step, real value_normalised);
 
     /**
      * @brief Sets the note length of a step. e.g. for 1/32th length, pass in 0.03125
      * @param value [1/128 - 1] (Normal, Triolic, Dotted) Defining the length of a step
      */
-    static void set_step_length(context& ctx, real value_note_length);
+    static void set_step_length(context& cx, real value_note_length);
 
     /**
      * @brief Sets the mix of the trance gate.
      * @param value Defining the amount [normalised] of the trance gate
      */
-    static void set_mix(context& ctx, real value) { ctx.mix = value; }
+    static void set_mix(context& cx, real value) { cx.mix = value; }
 
     /**
      * @brief Sets the contour of the trance gate.
      * @param value Defining duration in [seconds: 4s - 0.001s] of attack and release slope
      */
-    static void set_contour(context& ctx, real value_seconds);
+    static void set_contour(context& cx, real value_seconds);
 
     /**
      * @brief Set the gate to either mono or stereo.
      */
-    static void set_stereo_mode(context& ctx, bool value);
+    static void set_stereo_mode(context& cx, bool value);
 
     /**
      * @brief Sets the width of the trance gate.
      * @param value Defining the amount [normalised] of stereo effect
      */
-    static void set_width(context& ctx, real value_normalised);
+    static void set_width(context& cx, real value_normalised);
 
     //--------------------------------------------------------------------
 private:
-    static void set_fade_in(context& ctx, real value);
-    static void set_delay(context& ctx, real value);
-    static void update_phases(context& ctx);
+    static void set_fade_in(context& cx, real value);
+    static void set_delay(context& cx, real value);
+    static void update_phases(context& cx);
 };
 
 //------------------------------------------------------------------------

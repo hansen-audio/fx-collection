@@ -55,38 +55,38 @@ trance_gate::context trance_gate::create()
 {
     using phs = dtb::modulation::phase;
 
-    context ctx;
+    context cx;
 
-    constexpr real ONE_32TH = real(1. / 32.);
+    constexpr real INIT_NOTE_LEN = real(1. / 32.);
 
-    phs::set_rate(ctx.delay_phase_ctx, phs::note_length_to_rate(ONE_32TH));
-    phs::set_mode(ctx.delay_phase_ctx, phs::MODE_TEMPO_SYNC);
+    phs::set_rate(cx.delay_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
+    phs::set_sync_mode(cx.delay_phase_cx, phs::sync_mode::TEMPO_SYNC);
 
-    phs::set_rate(ctx.fade_in_phase_ctx, phs::note_length_to_rate(ONE_32TH));
-    phs::set_mode(ctx.fade_in_phase_ctx, phs::MODE_TEMPO_SYNC);
+    phs::set_rate(cx.fade_in_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
+    phs::set_sync_mode(cx.fade_in_phase_cx, phs::sync_mode::TEMPO_SYNC);
 
-    phs::set_rate(ctx.step_phase_ctx, phs::note_length_to_rate(ONE_32TH));
-    phs::set_mode(ctx.step_phase_ctx, phs::MODE_TEMPO_SYNC);
+    phs::set_rate(cx.step_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
+    phs::set_sync_mode(cx.step_phase_cx, phs::sync_mode::TEMPO_SYNC);
 
     constexpr real TEMPO_BPM = real(120.);
-    set_tempo(ctx, TEMPO_BPM);
+    set_tempo(cx, TEMPO_BPM);
 
-    return ctx;
+    return cx;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::trigger(context& ctx, real delay_length, real fade_in_length)
+void trance_gate::trigger(context& cx, real delay_length, real fade_in_length)
 {
     //! Delay and FadeIn time can only be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
-    set_delay(ctx, delay_length);
-    set_fade_in(ctx, fade_in_length);
+    set_delay(cx, delay_length);
+    set_fade_in(cx, fade_in_length);
 
-    ctx.delay_phase_val    = real(0.);
-    ctx.fade_in_phase_val  = real(0.);
-    ctx.step_phase_val     = real(0.);
-    ctx.step_pos_val.first = 0;
+    cx.delay_phase_val    = real(0.);
+    cx.fade_in_phase_val  = real(0.);
+    cx.step_phase_val     = real(0.);
+    cx.step_pos_val.first = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
         in release playing back. Dann bricht auf einmal Audio weg wenn wir
@@ -98,167 +98,167 @@ void trance_gate::trigger(context& ctx, real delay_length, real fade_in_length)
         die Filter auf 1.0 resetted und das muss auch im ::trigger passieren.
     */
 
-    if (ctx.is_delay_active)
-        reset(ctx);
+    if (cx.is_delay_active)
+        reset(cx);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::reset(context& ctx)
+void trance_gate::reset(context& cx)
 {
     /*  Wenn Delay aktiv ist müssen die Filter auf 1.f resetted werden.
         Ansonsten klickt das leicht, weil die Filter nach dem Delay
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    real reset_value = ctx.is_delay_active ? real(1.) : real(0.);
-    for (auto& filt_ctx : ctx.contour_filters)
+    real reset_value = cx.is_delay_active ? real(1.) : real(0.);
+    for (auto& filt_cx : cx.contour_filters)
     {
-        dtb::filtering::one_pole_filter::reset(filt_ctx, reset_value);
+        dtb::filtering::one_pole_filter::reset(filt_cx, reset_value);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
+void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
 {
     using phs = dtb::modulation::phase;
 
     // When delay is active and delay_phase has not yet overflown, just pass through.
     bool const is_overflow =
-        phs::advance_one_shot(ctx.delay_phase_ctx, ctx.delay_phase_val, ONE_SAMPLE);
-    if (ctx.is_delay_active && !is_overflow)
+        phs::advance_one_shot(cx.delay_phase_cx, cx.delay_phase_val, ONE_SAMPLE);
+    if (cx.is_delay_active && !is_overflow)
     {
         out = in;
         return;
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    mut_real value_le = ctx.channel_steps.at(L).at(ctx.step_pos_val.first);
-    mut_real value_ri = ctx.channel_steps.at(ctx.ch).at(ctx.step_pos_val.first);
+    mut_real value_le = cx.channel_steps.at(L).at(cx.step_pos_val.first);
+    mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_pos_val.first);
 
     // Keep order here. Mix must be applied last. The filters smooth everything, cracklefree.
-    apply_width(value_le, value_ri, ctx.width);
-    apply_contour(value_le, value_ri, ctx.contour_filters);
-    real tmp_mix = ctx.is_fade_in_active ? ctx.mix * ctx.fade_in_phase_val : ctx.mix;
+    apply_width(value_le, value_ri, cx.width);
+    apply_contour(value_le, value_ri, cx.contour_filters);
+    real tmp_mix = cx.is_fade_in_active ? cx.mix * cx.fade_in_phase_val : cx.mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
     out.data[L] = in.data[L] * value_le;
     out.data[R] = in.data[R] * value_ri;
 
-    update_phases(ctx);
+    update_phases(cx);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::update_phases(context& ctx)
+void trance_gate::update_phases(context& cx)
 {
     using phs = dtb::modulation::phase;
 
-    phs::advance_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
+    phs::advance_one_shot(cx.fade_in_phase_cx, cx.fade_in_phase_val, ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
-    bool const is_overflow = phs::advance(ctx.step_phase_ctx, ctx.step_phase_val, ONE_SAMPLE);
+    bool const is_overflow = phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
-        ++ctx.step_pos_val;
+        ++cx.step_pos_val;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_sample_rate(context& ctx, real value)
+void trance_gate::set_sample_rate(context& cx, real value)
 {
     using phs = dtb::modulation::phase;
     using opf = dtb::filtering::one_pole_filter;
 
-    phs::set_sample_rate(ctx.delay_phase_ctx, value);
-    phs::set_sample_rate(ctx.fade_in_phase_ctx, value);
-    phs::set_sample_rate(ctx.step_phase_ctx, value);
+    phs::set_sample_rate(cx.delay_phase_cx, value);
+    phs::set_sample_rate(cx.fade_in_phase_cx, value);
+    phs::set_sample_rate(cx.step_phase_cx, value);
 
-    ctx.sample_rate = value;
+    cx.sample_rate = value;
 
-    for (auto& filt_ctx : ctx.contour_filters)
+    for (auto& filt_cx : cx.contour_filters)
     {
-        real pole = opf::tau_to_pole(ctx.contour, ctx.sample_rate);
-        opf::update_pole(filt_ctx, pole);
+        real pole = opf::tau_to_pole(cx.contour, cx.sample_rate);
+        opf::update_pole(filt_cx, pole);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step(context& ctx, i32 channel, i32 step, real value_normalised)
+void trance_gate::set_step(context& cx, i32 channel, i32 step, real value_normalised)
 {
-    ctx.channel_steps.at(channel).at(step) = value_normalised;
+    cx.channel_steps.at(channel).at(step) = value_normalised;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_width(context& ctx, real value_normalised)
+void trance_gate::set_width(context& cx, real value_normalised)
 {
-    ctx.width = real(1.) - value_normalised;
+    cx.width = real(1.) - value_normalised;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_stereo_mode(context& ctx, bool value)
+void trance_gate::set_stereo_mode(context& cx, bool value)
 {
-    ctx.ch = value ? R : L;
+    cx.ch = value ? R : L;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_length(context& ctx, real value_note_length)
-{
-    using phs = dtb::modulation::phase;
-
-    phs::set_note_length(ctx.step_phase_ctx, value_note_length);
-}
-//------------------------------------------------------------------------
-void trance_gate::set_tempo(context& ctx, real value)
+void trance_gate::set_step_length(context& cx, real value_note_length)
 {
     using phs = dtb::modulation::phase;
 
-    phs::set_tempo(ctx.delay_phase_ctx, value);
-    phs::set_tempo(ctx.fade_in_phase_ctx, value);
-    phs::set_tempo(ctx.step_phase_ctx, value);
+    phs::set_note_length(cx.step_phase_cx, value_note_length);
 }
-
 //------------------------------------------------------------------------
-void trance_gate::set_step_count(context& ctx, i32 value)
+void trance_gate::set_tempo(context& cx, real value)
 {
-    ctx.step_pos_val.second = value;
-    ctx.step_pos_val.second = std::clamp(ctx.step_pos_val.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
+    using phs = dtb::modulation::phase;
+
+    phs::set_tempo(cx.delay_phase_cx, value);
+    phs::set_tempo(cx.fade_in_phase_cx, value);
+    phs::set_tempo(cx.step_phase_cx, value);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_contour(context& ctx, real value_seconds)
+void trance_gate::set_step_count(context& cx, i32 value)
+{
+    cx.step_pos_val.second = value;
+    cx.step_pos_val.second = std::clamp(cx.step_pos_val.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
+}
+
+//------------------------------------------------------------------------
+void trance_gate::set_contour(context& cx, real value_seconds)
 {
     using opf = dtb::filtering::one_pole_filter;
 
-    if (ctx.contour == value_seconds)
+    if (cx.contour == value_seconds)
         return;
 
-    ctx.contour = value_seconds;
-    for (auto& filt_ctx : ctx.contour_filters)
+    cx.contour = value_seconds;
+    for (auto& filt_cx : cx.contour_filters)
     {
-        real pole = opf::tau_to_pole(ctx.contour, ctx.sample_rate);
-        opf::update_pole(filt_ctx, pole);
+        real pole = opf::tau_to_pole(cx.contour, cx.sample_rate);
+        opf::update_pole(filt_cx, pole);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_fade_in(context& ctx, real value)
+void trance_gate::set_fade_in(context& cx, real value)
 {
     using phs = dtb::modulation::phase;
 
-    ctx.is_fade_in_active = value > real(0.);
-    if (!ctx.is_fade_in_active)
+    cx.is_fade_in_active = value > real(0.);
+    if (!cx.is_fade_in_active)
         return;
 
-    phs::set_note_length(ctx.fade_in_phase_ctx, value);
+    phs::set_note_length(cx.fade_in_phase_cx, value);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_delay(context& ctx, real value)
+void trance_gate::set_delay(context& cx, real value)
 {
     using phs = dtb::modulation::phase;
 
-    ctx.is_delay_active = value > real(0.);
-    if (!ctx.is_delay_active)
+    cx.is_delay_active = value > real(0.);
+    if (!cx.is_delay_active)
         return;
 
-    phs::set_note_length(ctx.delay_phase_ctx, value);
+    phs::set_note_length(cx.delay_phase_cx, value);
 }
 
 //------------------------------------------------------------------------
