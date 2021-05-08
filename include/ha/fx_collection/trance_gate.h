@@ -41,8 +41,8 @@ public:
             2. Fade In Phase: Dauer der TranceGate fade in Zeit
             3. Step Phase: läuft über die Dauer eines einzelnen Steps
         */
-        dtb::modulation::one_shot_phase::context delay_phase_ctx;
-        dtb::modulation::one_shot_phase::context fade_in_phase_ctx;
+        dtb::modulation::phase::context delay_phase_ctx;
+        dtb::modulation::phase::context fade_in_phase_ctx;
         dtb::modulation::phase::context step_phase_ctx;
         mut_real delay_phase_val   = real(0.);
         mut_real step_phase_val    = real(0.);

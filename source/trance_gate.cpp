@@ -81,9 +81,7 @@ void trance_gate::trigger(context& ctx, real delay_length, real fade_in_length)
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
     set_delay(ctx, delay_length);
-    ctx.delay_phase_ctx.did_overflow = false;
     set_fade_in(ctx, fade_in_length);
-    ctx.fade_in_phase_ctx.did_overflow = false;
 
     ctx.delay_phase_val    = real(0.);
     ctx.fade_in_phase_val  = real(0.);
@@ -122,11 +120,11 @@ void trance_gate::reset(context& ctx)
 //------------------------------------------------------------------------
 void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 {
-    using osp = dtb::modulation::one_shot_phase;
+    using phs = dtb::modulation::phase;
 
     // When delay is active and delay_phase has not yet overflown, just pass through.
     bool const is_overflow =
-        osp::advance_one_shot(ctx.delay_phase_ctx, ctx.delay_phase_val, ONE_SAMPLE);
+        phs::advance_one_shot(ctx.delay_phase_ctx, ctx.delay_phase_val, ONE_SAMPLE);
     if (ctx.is_delay_active && !is_overflow)
     {
         out = in;
@@ -152,10 +150,9 @@ void trance_gate::process(context& ctx, audio_frame const& in, audio_frame& out)
 //------------------------------------------------------------------------
 void trance_gate::update_phases(context& ctx)
 {
-    using osp = dtb::modulation::one_shot_phase;
     using phs = dtb::modulation::phase;
 
-    osp::advance_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
+    phs::advance_one_shot(ctx.fade_in_phase_ctx, ctx.fade_in_phase_val, ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
     bool const is_overflow = phs::advance(ctx.step_phase_ctx, ctx.step_phase_val, ONE_SAMPLE);
