@@ -3,8 +3,7 @@
 #include "ha/fx_collection/trance_gate.h"
 #include <algorithm>
 
-namespace ha {
-namespace fx_collection {
+namespace ha::fx_collection {
 
 //------------------------------------------------------------------------
 static constexpr i32 ONE_SAMPLE = 1;
@@ -198,12 +197,13 @@ void trance_gate::set_stereo_mode(context& cx, bool value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_length(context& cx, real value_note_length)
+void trance_gate::set_step_len(context& cx, real value_note_len)
 {
     using phs = dtb::modulation::phase;
 
-    phs::set_note_length(cx.step_phase_cx, value_note_length);
+    phs::set_note_length(cx.step_phase_cx, value_note_len);
 }
+
 //------------------------------------------------------------------------
 void trance_gate::set_tempo(context& cx, real value)
 {
@@ -262,5 +262,4 @@ void trance_gate::set_delay(context& cx, real value)
 }
 
 //------------------------------------------------------------------------
-} // namespace fx_collection
-} // namespace ha
+} // namespace ha::fx_collection

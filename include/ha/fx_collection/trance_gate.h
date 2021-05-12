@@ -8,8 +8,7 @@
 #include <array>
 #include <vector>
 
-namespace ha {
-namespace fx_collection {
+namespace ha::fx_collection {
 
 //------------------------------------------------------------------------
 /**
@@ -32,7 +31,7 @@ public:
 
     struct context
     {
-        channel_steps_list channel_steps;
+        alignas(BYTE_ALIGNMENT) channel_steps_list channel_steps;
         contour_filters_list contour_filters;
 
         /*
@@ -48,11 +47,11 @@ public:
         mut_real step_phase_val    = real(0.);
         mut_real fade_in_phase_val = real(0.);
 
-        step_pos step_pos_val;
+        step_pos step_pos_val  = {0, 16};
         mut_real mix           = real(1.);
         mut_real width         = real(0.);
-        mut_real contour       = real(-1.);
-        mut_real sample_rate   = real(1.);
+        mut_real contour       = real(0.01);
+        mut_real sample_rate   = real(44100.);
         mut_i32 ch             = L;
         bool is_delay_active   = false;
         bool is_fade_in_active = false;
@@ -113,7 +112,7 @@ public:
      * @brief Sets the note length of a step. e.g. for 1/32th length, pass in 0.03125
      * @param value [1/128 - 1] (Normal, Triolic, Dotted) Defining the length of a step
      */
-    static void set_step_length(context& cx, real value_note_length);
+    static void set_step_len(context& cx, real value_note_len);
 
     /**
      * @brief Sets the mix of the trance gate.
@@ -146,5 +145,4 @@ private:
 };
 
 //------------------------------------------------------------------------
-} // namespace fx_collection
-} // namespace ha
+} // namespace ha::fx_collection
