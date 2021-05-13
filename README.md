@@ -4,6 +4,14 @@
 
 The ```fx-collection``` library combines basic classes from ```dsp-tool-box``` to audio effects. The trance gate effect for example uses three modulation phases and a one pole filter from the ```dsp-tool-box```. 
 
+### Dependency map
+
+```
+fx-collection
++-- dsp-tool-box
++-- googletest
+```
+
 ## Building the project
 
 Execute the following commands on cli.
