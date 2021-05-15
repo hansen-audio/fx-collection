@@ -227,7 +227,7 @@ void trance_gate::set_step_len(context& cx, real value_note_len)
 {
     using phs = dtb::modulation::phase;
 
-    phs::set_note_length(cx.step_phase_cx, value_note_len);
+    phs::set_note_len(cx.step_phase_cx, value_note_len);
 }
 
 //------------------------------------------------------------------------
@@ -272,7 +272,7 @@ void trance_gate::set_fade_in(context& cx, real value)
     if (!cx.is_fade_in_active)
         return;
 
-    phs::set_note_length(cx.fade_in_phase_cx, value);
+    phs::set_note_len(cx.fade_in_phase_cx, value);
 }
 
 //------------------------------------------------------------------------
@@ -284,7 +284,7 @@ void trance_gate::set_delay(context& cx, real value)
     if (!cx.is_delay_active)
         return;
 
-    phs::set_note_length(cx.delay_phase_cx, value);
+    phs::set_note_len(cx.delay_phase_cx, value);
 }
 
 //------------------------------------------------------------------------
