@@ -62,16 +62,22 @@ static void apply_shuffle(mut_real& value_le,
     constexpr real MAX_DELAY = real(3. / 4.);
     real delay               = cx.shuffle * MAX_DELAY;
 
-    if (cx.step_is_shuffle_note)
+    if (cx.step_val.is_shuffle)
         apply_gate_delay(value_le, value_ri, phase_value, delay);
 }
 
 //------------------------------------------------------------------------
-static void operator++(trance_gate::step_pos& step)
+static void set_shuffle(trance_gate::context::step& s, real note_len)
 {
-    ++step.first;
-    if (!(step.first < step.second))
-        step.first = 0;
+    s.is_shuffle = detail::is_shuffle_note(s.pos, note_len);
+}
+
+//------------------------------------------------------------------------
+static void operator++(trance_gate::context::step& s)
+{
+    ++s.pos;
+    if (!(s.pos < s.count))
+        s.pos = 0;
 }
 
 //------------------------------------------------------------------------
@@ -109,10 +115,10 @@ void trance_gate::trigger(context& cx, real delay_length, real fade_in_length)
     set_delay(cx, delay_length);
     set_fade_in(cx, fade_in_length);
 
-    cx.delay_phase_val    = real(0.);
-    cx.fade_in_phase_val  = real(0.);
-    cx.step_phase_val     = real(0.);
-    cx.step_pos_val.first = 0;
+    cx.delay_phase_val   = real(0.);
+    cx.fade_in_phase_val = real(0.);
+    cx.step_phase_val    = real(0.);
+    cx.step_val.pos      = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
         in release playing back. Dann bricht auf einmal Audio weg wenn wir
@@ -159,8 +165,8 @@ void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    mut_real value_le = cx.channel_steps.at(L).at(cx.step_pos_val.first);
-    mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_pos_val.first);
+    mut_real value_le = cx.channel_steps.at(L).at(cx.step_val.pos);
+    mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_val.pos);
 
     // Keep order here. Mix must be applied last. The filters smooth everything,
     // cracklefree.
@@ -190,9 +196,8 @@ void trance_gate::update_phases(context& cx)
         phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
     {
-        ++cx.step_pos_val;
-        cx.step_is_shuffle_note = detail::is_shuffle_note(
-            cx.step_pos_val.first, cx.step_phase_cx.note_len);
+        ++cx.step_val;
+        set_shuffle(cx.step_val, cx.step_phase_cx.note_len);
     }
 }
 
@@ -231,7 +236,7 @@ void trance_gate::set_width(context& cx, real value_normalised)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_shuffle(context& cx, real value)
+void trance_gate::set_shuffle_amount(context& cx, real value)
 {
     cx.shuffle = value;
 }
@@ -263,9 +268,9 @@ void trance_gate::set_tempo(context& cx, real value)
 //------------------------------------------------------------------------
 void trance_gate::set_step_count(context& cx, i32 value)
 {
-    cx.step_pos_val.second = value;
-    cx.step_pos_val.second =
-        std::clamp(cx.step_pos_val.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
+    cx.step_val.count = value;
+    cx.step_val.count =
+        std::clamp(cx.step_val.count, MIN_NUM_STEPS, MAX_NUM_STEPS);
 }
 
 //------------------------------------------------------------------------

@@ -28,12 +28,18 @@ public:
     using channel_steps_list = std::array<step_values, NUM_CHANNELS>;
     using contour_filters_list =
         std::array<dtb::filtering::one_pole_filter::context, NUM_CHANNELS>;
-    using step_pos = std::pair<mut_i32, mut_i32>; // current_step, step_count
 
     struct context
     {
         alignas(BYTE_ALIGNMENT) channel_steps_list channel_steps;
         contour_filters_list contour_filters;
+
+        struct step
+        {
+            mut_i32 pos     = 0;
+            mut_i32 count   = 16;
+            bool is_shuffle = false;
+        };
 
         /*
             Wir haben 3 Phasen, die hier zum Einsatz kommen:
@@ -48,16 +54,15 @@ public:
         mut_real step_phase_val    = real(0.);
         mut_real fade_in_phase_val = real(0.);
 
-        step_pos step_pos_val     = {0, 16};
-        bool step_is_shuffle_note = false;
-        mut_real mix              = real(1.);
-        mut_real width            = real(0.);
-        mut_real shuffle          = real(0.);
-        mut_real contour          = real(0.01);
-        mut_real sample_rate      = real(44100.);
-        mut_i32 ch                = L;
-        bool is_delay_active      = false;
-        bool is_fade_in_active    = false;
+        step step_val;
+        mut_real mix           = real(1.);
+        mut_real width         = real(0.);
+        mut_real shuffle       = real(0.);
+        mut_real contour       = real(0.01);
+        mut_real sample_rate   = real(44100.);
+        mut_i32 ch             = L;
+        bool is_delay_active   = false;
+        bool is_fade_in_active = false;
     };
 
     /**
@@ -148,10 +153,10 @@ public:
     static void set_width(context& cx, real value_normalised);
 
     /**
-     * @brief Sets the shuffle of the trance gate.
+     * @brief Sets the amount of shuffle for the trance gate.
      * @param value Defining the amount [normalised] of shuffle
      */
-    static void set_shuffle(context& cx, real value);
+    static void set_shuffle_amount(context& cx, real value);
 
     //--------------------------------------------------------------------
 private:
