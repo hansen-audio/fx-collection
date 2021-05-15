@@ -47,15 +47,16 @@ public:
         mut_real step_phase_val    = real(0.);
         mut_real fade_in_phase_val = real(0.);
 
-        step_pos step_pos_val  = {0, 16};
-        mut_real mix           = real(1.);
-        mut_real width         = real(0.);
-        mut_real shuffle       = real(0.);
-        mut_real contour       = real(0.01);
-        mut_real sample_rate   = real(44100.);
-        mut_i32 ch             = L;
-        bool is_delay_active   = false;
-        bool is_fade_in_active = false;
+        step_pos step_pos_val     = {0, 16};
+        bool step_is_shuffle_note = false;
+        mut_real mix              = real(1.);
+        mut_real width            = real(0.);
+        mut_real shuffle          = real(0.);
+        mut_real contour          = real(0.01);
+        mut_real sample_rate      = real(44100.);
+        mut_i32 ch                = L;
+        bool is_delay_active      = false;
+        bool is_fade_in_active    = false;
     };
 
     /**

@@ -1,6 +1,7 @@
 // Copyright(c) 2016 René Hansen.
 
 #include "ha/fx_collection/trance_gate.h"
+#include "detail/shuffle_note.h"
 #include <algorithm>
 
 namespace ha::fx_collection {
@@ -53,10 +54,11 @@ static void apply_shuffle(mut_real& value_le,
                           real phase_value,
                           trance_gate::context const& cx)
 {
-    constexpr real MAX_DELAY = real(0.5);
+    constexpr real MAX_DELAY = real(2. / 3.);
     real delay               = cx.shuffle * MAX_DELAY;
 
-    apply_gate_delay(value_le, value_ri, phase_value, delay);
+    if (cx.step_is_shuffle_note)
+        apply_gate_delay(value_le, value_ri, phase_value, delay);
 }
 
 //------------------------------------------------------------------------
@@ -155,6 +157,7 @@ void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
     mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_pos_val.first);
 
     // Keep order here. Mix must be applied last. The filters smooth everything, cracklefree.
+    apply_shuffle(value_le, value_ri, cx.step_phase_val, cx);
     apply_width(value_le, value_ri, cx.width);
     apply_contour(value_le, value_ri, cx.contour_filters);
     real tmp_mix = cx.is_fade_in_active ? cx.mix * cx.fade_in_phase_val : cx.mix;
@@ -176,7 +179,11 @@ void trance_gate::update_phases(context& cx)
     // When step_phase has overflown, increment step.
     bool const is_overflow = phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
+    {
         ++cx.step_pos_val;
+        cx.step_is_shuffle_note =
+            detail::is_shuffle_note(cx.step_pos_val.first, cx.step_phase_cx.note_len);
+    }
 }
 
 //------------------------------------------------------------------------

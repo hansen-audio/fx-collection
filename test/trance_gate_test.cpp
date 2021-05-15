@@ -1,5 +1,6 @@
 // Copyright(c) 2021 Hansen Audio.
 
+#include "detail/shuffle_note.h"
 #include "ha/fx_collection/trance_gate.h"
 
 #include "gtest/gtest.h"
@@ -69,6 +70,41 @@ TEST(trance_gate_test, test_processing)
     EXPECT_TRUE(sum.data[1] > real(468.));
     EXPECT_TRUE(sum.data[0] < real(469.));
     EXPECT_TRUE(sum.data[1] < real(469.));
+}
+
+//-----------------------------------------------------------------------------
+TEST(trance_gate_test, test_is_shuffle_note_16)
+{
+    mut_i32 step_index      = 0;
+    constexpr real note_len = real(1. / 16.);
+
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index, note_len));
+}
+
+//-----------------------------------------------------------------------------
+TEST(trance_gate_test, test_is_shuffle_note_32)
+{
+    mut_i32 step_index      = 0;
+    constexpr real note_len = real(1. / 32.);
+
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_FALSE(detail::is_shuffle_note(step_index++, note_len));
+    EXPECT_TRUE(detail::is_shuffle_note(step_index++, note_len));
 }
 
 //-----------------------------------------------------------------------------
