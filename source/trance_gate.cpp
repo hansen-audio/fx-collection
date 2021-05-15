@@ -31,8 +31,9 @@ static void apply_mix(mut_real& value_le, mut_real& value_ri, real mix)
 }
 
 //------------------------------------------------------------------------
-static void
-apply_contour(mut_real& value_le, mut_real& value_ri, trance_gate::contour_filters_list& contour)
+static void apply_contour(mut_real& value_le,
+                          mut_real& value_ri,
+                          trance_gate::contour_filters_list& contour)
 {
     using opf = dtb::filtering::one_pole_filter;
 
@@ -41,7 +42,10 @@ apply_contour(mut_real& value_le, mut_real& value_ri, trance_gate::contour_filte
 }
 
 //------------------------------------------------------------------------
-static void apply_gate_delay(mut_real& value_le, mut_real& value_ri, real phase_value, real delay)
+static void apply_gate_delay(mut_real& value_le,
+                             mut_real& value_ri,
+                             real phase_value,
+                             real delay)
 {
     real factor = phase_value > delay ? 1. : 0.;
     value_le *= factor;
@@ -143,9 +147,10 @@ void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
 {
     using phs = dtb::modulation::phase;
 
-    // When delay is active and delay_phase has not yet overflown, just pass through.
-    bool const is_overflow =
-        phs::advance_one_shot(cx.delay_phase_cx, cx.delay_phase_val, ONE_SAMPLE);
+    // When delay is active and delay_phase has not yet overflown, just pass
+    // through.
+    bool const is_overflow = phs::advance_one_shot(
+        cx.delay_phase_cx, cx.delay_phase_val, ONE_SAMPLE);
     if (cx.is_delay_active && !is_overflow)
     {
         out = in;
@@ -156,11 +161,13 @@ void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
     mut_real value_le = cx.channel_steps.at(L).at(cx.step_pos_val.first);
     mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_pos_val.first);
 
-    // Keep order here. Mix must be applied last. The filters smooth everything, cracklefree.
+    // Keep order here. Mix must be applied last. The filters smooth everything,
+    // cracklefree.
     apply_shuffle(value_le, value_ri, cx.step_phase_val, cx);
     apply_width(value_le, value_ri, cx.width);
     apply_contour(value_le, value_ri, cx.contour_filters);
-    real tmp_mix = cx.is_fade_in_active ? cx.mix * cx.fade_in_phase_val : cx.mix;
+    real tmp_mix =
+        cx.is_fade_in_active ? cx.mix * cx.fade_in_phase_val : cx.mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
     out.data[L] = in.data[L] * value_le;
@@ -174,15 +181,17 @@ void trance_gate::update_phases(context& cx)
 {
     using phs = dtb::modulation::phase;
 
-    phs::advance_one_shot(cx.fade_in_phase_cx, cx.fade_in_phase_val, ONE_SAMPLE);
+    phs::advance_one_shot(cx.fade_in_phase_cx, cx.fade_in_phase_val,
+                          ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
-    bool const is_overflow = phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
+    bool const is_overflow =
+        phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
     {
         ++cx.step_pos_val;
-        cx.step_is_shuffle_note =
-            detail::is_shuffle_note(cx.step_pos_val.first, cx.step_phase_cx.note_len);
+        cx.step_is_shuffle_note = detail::is_shuffle_note(
+            cx.step_pos_val.first, cx.step_phase_cx.note_len);
     }
 }
 
@@ -206,7 +215,10 @@ void trance_gate::set_sample_rate(context& cx, real value)
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step(context& cx, i32 channel, i32 step, real value_normalised)
+void trance_gate::set_step(context& cx,
+                           i32 channel,
+                           i32 step,
+                           real value_normalised)
 {
     cx.channel_steps.at(channel).at(step) = value_normalised;
 }
@@ -251,7 +263,8 @@ void trance_gate::set_tempo(context& cx, real value)
 void trance_gate::set_step_count(context& cx, i32 value)
 {
     cx.step_pos_val.second = value;
-    cx.step_pos_val.second = std::clamp(cx.step_pos_val.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
+    cx.step_pos_val.second =
+        std::clamp(cx.step_pos_val.second, MIN_NUM_STEPS, MAX_NUM_STEPS);
 }
 
 //------------------------------------------------------------------------

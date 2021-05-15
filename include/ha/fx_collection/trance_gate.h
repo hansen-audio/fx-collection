@@ -24,10 +24,11 @@ public:
     static constexpr i32 L             = 0;
     static constexpr i32 R             = 1;
 
-    using step_values          = std::array<mut_real, MAX_NUM_STEPS>;
-    using channel_steps_list   = std::array<step_values, NUM_CHANNELS>;
-    using contour_filters_list = std::array<dtb::filtering::one_pole_filter::context, NUM_CHANNELS>;
-    using step_pos             = std::pair<mut_i32, mut_i32>; // current_step, step_count
+    using step_values        = std::array<mut_real, MAX_NUM_STEPS>;
+    using channel_steps_list = std::array<step_values, NUM_CHANNELS>;
+    using contour_filters_list =
+        std::array<dtb::filtering::one_pole_filter::context, NUM_CHANNELS>;
+    using step_pos = std::pair<mut_i32, mut_i32>; // current_step, step_count
 
     struct context
     {
@@ -85,10 +86,13 @@ public:
      * Both delay_len and fade_in_len can only be set when triggering the gate.
      * Changing these values during the gate is running makes no sense.
      *
-     * @param delay_len Length of delay time in [seconds] until the trance gate starts processing.
+     * @param delay_len Length of delay time in [seconds] until the trance gate
+     * starts processing.
      * @param fade_in_len Length of fade_in time in [seconds].
      */
-    static void trigger(context& cx, real delay_len = real(0.), real fade_in_len = real(0.));
+    static void trigger(context& cx,
+                        real delay_len   = real(0.),
+                        real fade_in_len = real(0.));
 
     /**
      * @brief Resets filters and values.
@@ -105,14 +109,17 @@ public:
      * @brief Sets the amount of a step.
      * @param channel The channel index of the step to change
      * @param step The index of the step to change
-     * @param value Defining the amount [normalised] of a step, can also be just on or
-     * off
+     * @param value Defining the amount [normalised] of a step, can also be just
+     * on or off
      */
-    static void set_step(context& cx, i32 channel, i32 step, real value_normalised);
+    static void
+    set_step(context& cx, i32 channel, i32 step, real value_normalised);
 
     /**
-     * @brief Sets the note length of a step. e.g. for 1/32th length, pass in 0.03125
-     * @param value [1/128 - 1] (Normal, Triolic, Dotted) Defining the length of a step
+     * @brief Sets the note length of a step. e.g. for 1/32th length, pass in
+     * 0.03125
+     * @param value [1/128 - 1] (Normal, Triolic, Dotted) Defining the length of
+     * a step
      */
     static void set_step_len(context& cx, real value_note_len);
 
@@ -124,7 +131,8 @@ public:
 
     /**
      * @brief Sets the contour of the trance gate.
-     * @param value Defining duration in [seconds: 4s - 0.001s] of attack and release slope
+     * @param value Defining duration in [seconds: 4s - 0.001s] of attack and
+     * release slope
      */
     static void set_contour(context& cx, real value_seconds);
 
