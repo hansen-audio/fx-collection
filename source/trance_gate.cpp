@@ -58,7 +58,8 @@ static void apply_shuffle(mut_real& value_le,
                           real phase_value,
                           trance_gate::context const& cx)
 {
-    constexpr real MAX_DELAY = real(2. / 3.);
+    // TODO: Is this a good value for a MAX_DELAY?
+    constexpr real MAX_DELAY = real(3. / 4.);
     real delay               = cx.shuffle * MAX_DELAY;
 
     if (cx.step_is_shuffle_note)
