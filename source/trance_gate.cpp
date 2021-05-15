@@ -40,6 +40,26 @@ apply_contour(mut_real& value_le, mut_real& value_ri, trance_gate::contour_filte
 }
 
 //------------------------------------------------------------------------
+static void apply_gate_delay(mut_real& value_le, mut_real& value_ri, real phase_value, real delay)
+{
+    real factor = phase_value > delay ? 1. : 0.;
+    value_le *= factor;
+    value_ri *= factor;
+}
+
+//------------------------------------------------------------------------
+static void apply_shuffle(mut_real& value_le,
+                          mut_real& value_ri,
+                          real phase_value,
+                          trance_gate::context const& cx)
+{
+    constexpr real MAX_DELAY = real(0.5);
+    real delay               = cx.shuffle * MAX_DELAY;
+
+    apply_gate_delay(value_le, value_ri, phase_value, delay);
+}
+
+//------------------------------------------------------------------------
 static void operator++(trance_gate::step_pos& step)
 {
     ++step.first;
@@ -188,6 +208,12 @@ void trance_gate::set_step(context& cx, i32 channel, i32 step, real value_normal
 void trance_gate::set_width(context& cx, real value_normalised)
 {
     cx.width = real(1.) - value_normalised;
+}
+
+//------------------------------------------------------------------------
+void trance_gate::set_shuffle(context& cx, real value)
+{
+    cx.shuffle = value;
 }
 
 //------------------------------------------------------------------------

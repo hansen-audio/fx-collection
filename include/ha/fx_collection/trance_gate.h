@@ -50,6 +50,7 @@ public:
         step_pos step_pos_val  = {0, 16};
         mut_real mix           = real(1.);
         mut_real width         = real(0.);
+        mut_real shuffle       = real(0.);
         mut_real contour       = real(0.01);
         mut_real sample_rate   = real(44100.);
         mut_i32 ch             = L;
@@ -136,6 +137,12 @@ public:
      * @param value Defining the amount [normalised] of stereo effect
      */
     static void set_width(context& cx, real value_normalised);
+
+    /**
+     * @brief Sets the shuffle of the trance gate.
+     * @param value Defining the amount [normalised] of shuffle
+     */
+    static void set_shuffle(context& cx, real value);
 
     //--------------------------------------------------------------------
 private:
