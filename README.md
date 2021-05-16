@@ -29,7 +29,9 @@ cmake --build .
 CMake geneartors for all platforms.
 
 * Linux: ```cmake -DCMAKE_BUILD_TYPE=[Debug|Release] ...```
+
 * macOS: ```cmake -GXcode ...```
+
 * Windows 10: ```cmake -G"Visual Studio 16 2019" -A x64 ...```
 
 ## Effects
