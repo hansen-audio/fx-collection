@@ -1,6 +1,8 @@
 # FX Colletion Library
 
-## Motivation
+[![CMake (Linux, macOS, Windows)](https://github.com/hansen-audio/fx-collection/actions/workflows/cmake.yml/badge.svg)](https://github.com/hansen-audio/fx-collection/actions/workflows/cmake.yml)
+
+## Summary
 
 The ```fx-collection``` library combines basic classes from ```dsp-tool-box``` to audio effects. The trance gate effect for example uses three modulation phases and a one pole filter from the ```dsp-tool-box```. 
 
