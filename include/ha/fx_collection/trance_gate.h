@@ -86,6 +86,11 @@ public:
     static void set_tempo(context& cx, real value);
 
     /**
+     * @brief Updates the musical project time [quarter notes].
+     */
+    static void update_project_time_music(context& cx, real value);
+
+    /**
      * @brief Triggers the trance gate.
      *
      * Both delay_len and fade_in_len can only be set when triggering the gate.

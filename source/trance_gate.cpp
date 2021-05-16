@@ -266,6 +266,15 @@ void trance_gate::set_tempo(context& cx, real value)
 }
 
 //------------------------------------------------------------------------
+void trance_gate::update_project_time_music(context& cx, real value)
+{
+    using phs = dtb::modulation::phase;
+
+    phs::set_project_time(cx.delay_phase_cx, value);
+    phs::set_project_time(cx.fade_in_phase_cx, value);
+    phs::set_project_time(cx.step_phase_cx, value);
+}
+//------------------------------------------------------------------------
 void trance_gate::set_step_count(context& cx, i32 value)
 {
     cx.step_val.count = value;
