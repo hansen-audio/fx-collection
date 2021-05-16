@@ -92,13 +92,13 @@ trance_gate::context trance_gate::create()
     constexpr real INIT_NOTE_LEN = real(1. / 32.);
 
     phs::set_rate(cx.delay_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.delay_phase_cx, phs::sync_mode::TEMPO_SYNC);
+    phs::set_sync_mode(cx.delay_phase_cx, phs::sync_mode::PROJECT_SYNC);
 
     phs::set_rate(cx.fade_in_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.fade_in_phase_cx, phs::sync_mode::TEMPO_SYNC);
+    phs::set_sync_mode(cx.fade_in_phase_cx, phs::sync_mode::PROJECT_SYNC);
 
     phs::set_rate(cx.step_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.step_phase_cx, phs::sync_mode::TEMPO_SYNC);
+    phs::set_sync_mode(cx.step_phase_cx, phs::sync_mode::PROJECT_SYNC);
 
     constexpr real TEMPO_BPM = real(120.);
     set_tempo(cx, TEMPO_BPM);
