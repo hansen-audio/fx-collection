@@ -47,7 +47,7 @@ static void apply_gate_delay(mut_real& value_le,
                              real phase_value,
                              real delay)
 {
-    real factor = phase_value > delay ? 1. : 0.;
+    real factor = phase_value > delay ? real(1.) : real(0.);
     value_le *= factor;
     value_ri *= factor;
 }
