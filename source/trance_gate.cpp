@@ -150,6 +150,18 @@ void trance_gate::reset(context& cx)
 }
 
 //------------------------------------------------------------------------
+void trance_gate::reset_step_pos(context& cx, i32 value)
+{
+    cx.step_val.pos = value;
+}
+
+//------------------------------------------------------------------------
+i32 trance_gate::get_step_pos(const context& cx)
+{
+    return cx.step_val.pos;
+}
+
+//------------------------------------------------------------------------
 void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
 {
     using phs = dtb::modulation::phase;
@@ -274,6 +286,7 @@ void trance_gate::update_project_time_music(context& cx, real value)
     phs::set_project_time(cx.fade_in_phase_cx, value);
     phs::set_project_time(cx.step_phase_cx, value);
 }
+
 //------------------------------------------------------------------------
 void trance_gate::set_step_count(context& cx, i32 value)
 {

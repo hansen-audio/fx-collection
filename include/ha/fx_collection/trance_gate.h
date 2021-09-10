@@ -110,6 +110,16 @@ public:
     static void reset(context& cx);
 
     /**
+     * @brief Resets the current step position.
+     */
+    static void reset_step_pos(context& cx, i32 value);
+
+    /**
+     * @brief Returns the current step position.
+     */
+    static i32 get_step_pos(const context& cx);
+
+    /**
      * @brief Sets the pattern length in steps.
      * @param value Number of steps until repeat
      */
