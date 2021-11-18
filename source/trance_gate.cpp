@@ -148,6 +148,8 @@ void TranceGateImpl::trigger(TranceGate& trance_gate,
 //------------------------------------------------------------------------
 void TranceGateImpl::reset(TranceGate& trance_gate)
 {
+    using OnePoleImpl = dtb::filtering::OnePoleImpl;
+
     /*  Wenn Delay aktiv ist müssen die Filter auf 1.f resetted werden.
         Ansonsten klickt das leicht, weil die Filter nach dem Delay
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
@@ -156,7 +158,7 @@ void TranceGateImpl::reset(TranceGate& trance_gate)
     real reset_value = trance_gate.is_delay_active ? real(1.) : real(0.);
     for (auto& filter : trance_gate.contour_filters)
     {
-        dtb::filtering::OnePoleImpl::reset(filter, reset_value);
+        OnePoleImpl::reset(filter, reset_value);
     }
 }
 
