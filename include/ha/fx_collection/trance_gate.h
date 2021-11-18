@@ -63,7 +63,7 @@ struct TranceGate
 struct TranceGateImpl final
 {
     /**
-     * @brief Initialises the trance gate context.
+     * @brief Initialises the trance gate.
      */
     static TranceGate create();
 
