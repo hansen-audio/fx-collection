@@ -18,12 +18,12 @@ using audio_sample = mut_real;
 
 constexpr std::size_t NUM_CHANNELS   = 4;
 constexpr std::size_t BYTE_ALIGNMENT = 16;
-struct audio_frame
+struct AudioFrame
 {
     alignas(BYTE_ALIGNMENT) std::array<audio_sample, NUM_CHANNELS> data;
 };
 
-constexpr audio_frame zero_audio_frame{0., 0., 0., 0.};
+constexpr AudioFrame zero_audio_frame{0., 0., 0., 0.};
 
 //------------------------------------------------------------------------
 } // namespace ha::fx_collection

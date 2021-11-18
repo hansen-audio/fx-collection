@@ -11,7 +11,7 @@ namespace {
 //-----------------------------------------------------------------------------
 TEST(array_alignment_test, test_16_byte_alignment)
 {
-    EXPECT_EQ(std::alignment_of<audio_frame>::value, 16);
+    EXPECT_EQ(std::alignment_of<AudioFrame>::value, 16);
 }
 
 //-----------------------------------------------------------------------------

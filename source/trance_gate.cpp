@@ -33,12 +33,14 @@ static void apply_mix(mut_real& value_le, mut_real& value_ri, real mix)
 //------------------------------------------------------------------------
 static void apply_contour(mut_real& value_le,
                           mut_real& value_ri,
-                          trance_gate::contour_filters_list& contour)
+                          TranceGate::ContourFilters& contour_filters)
 {
-    using opf = dtb::filtering::one_pole_filter;
+    using OnePoleImpl = dtb::filtering::OnePoleImpl;
 
-    value_le = opf::process(contour.at(trance_gate::L), value_le);
-    value_ri = opf::process(contour.at(trance_gate::R), value_ri);
+    value_le =
+        OnePoleImpl::process(contour_filters.at(TranceGate::L), value_le);
+    value_ri =
+        OnePoleImpl::process(contour_filters.at(TranceGate::R), value_ri);
 }
 
 //------------------------------------------------------------------------
@@ -56,24 +58,24 @@ static void apply_gate_delay(mut_real& value_le,
 static void apply_shuffle(mut_real& value_le,
                           mut_real& value_ri,
                           real phase_value,
-                          trance_gate::context const& cx)
+                          TranceGate const& trance_gate)
 {
     // TODO: Is this a good value for a MAX_DELAY?
     constexpr real MAX_DELAY = real(3. / 4.);
-    real delay               = cx.shuffle * MAX_DELAY;
+    real delay               = trance_gate.shuffle * MAX_DELAY;
 
-    if (cx.step_val.is_shuffle)
+    if (trance_gate.step_val.is_shuffle)
         apply_gate_delay(value_le, value_ri, phase_value, delay);
 }
 
 //------------------------------------------------------------------------
-static void set_shuffle(trance_gate::context::step& s, real note_len)
+static void set_shuffle(TranceGate::Step& s, real note_len)
 {
     s.is_shuffle = detail::is_shuffle_note(s.pos, note_len);
 }
 
 //------------------------------------------------------------------------
-static void operator++(trance_gate::context::step& s)
+static void operator++(TranceGate::Step& s)
 {
     ++s.pos;
     if (!(s.pos < s.count))
@@ -81,44 +83,53 @@ static void operator++(trance_gate::context::step& s)
 }
 
 //------------------------------------------------------------------------
-//	trance_gate
+//	TranceGateImpl
 //------------------------------------------------------------------------
-trance_gate::context trance_gate::create()
+TranceGate TranceGateImpl::create()
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
+    using Phase     = dtb::modulation::Phase;
 
-    context cx;
+    TranceGate trance_gate;
 
     constexpr real INIT_NOTE_LEN = real(1. / 32.);
 
-    phs::set_rate(cx.delay_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.delay_phase_cx, phs::sync_mode::PROJECT_SYNC);
+    PhaseImpl::set_rate(trance_gate.delay_phase,
+                        PhaseImpl::note_length_to_rate(INIT_NOTE_LEN));
+    PhaseImpl::set_sync_mode(trance_gate.delay_phase,
+                             Phase::SyncMode::ProjectSync);
 
-    phs::set_rate(cx.fade_in_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.fade_in_phase_cx, phs::sync_mode::PROJECT_SYNC);
+    PhaseImpl::set_rate(trance_gate.fade_in_phase,
+                        PhaseImpl::note_length_to_rate(INIT_NOTE_LEN));
+    PhaseImpl::set_sync_mode(trance_gate.fade_in_phase,
+                             Phase::SyncMode::ProjectSync);
 
-    phs::set_rate(cx.step_phase_cx, phs::note_length_to_rate(INIT_NOTE_LEN));
-    phs::set_sync_mode(cx.step_phase_cx, phs::sync_mode::PROJECT_SYNC);
+    PhaseImpl::set_rate(trance_gate.step_phase,
+                        PhaseImpl::note_length_to_rate(INIT_NOTE_LEN));
+    PhaseImpl::set_sync_mode(trance_gate.step_phase,
+                             Phase::SyncMode::ProjectSync);
 
     constexpr real TEMPO_BPM = real(120.);
-    set_tempo(cx, TEMPO_BPM);
+    set_tempo(trance_gate, TEMPO_BPM);
 
-    return cx;
+    return trance_gate;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::trigger(context& cx, real delay_length, real fade_in_length)
+void TranceGateImpl::trigger(TranceGate& trance_gate,
+                             real delay_length,
+                             real fade_in_length)
 {
     //! Delay and FadeIn time can only be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
     //! running makes no sense.
-    set_delay(cx, delay_length);
-    set_fade_in(cx, fade_in_length);
+    set_delay(trance_gate, delay_length);
+    set_fade_in(trance_gate, fade_in_length);
 
-    cx.delay_phase_val   = real(0.);
-    cx.fade_in_phase_val = real(0.);
-    cx.step_phase_val    = real(0.);
-    cx.step_val.pos      = 0;
+    trance_gate.delay_phase_val   = real(0.);
+    trance_gate.fade_in_phase_val = real(0.);
+    trance_gate.step_phase_val    = real(0.);
+    trance_gate.step_val.pos      = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
         in release playing back. Dann bricht auf einmal Audio weg wenn wir
@@ -130,209 +141,218 @@ void trance_gate::trigger(context& cx, real delay_length, real fade_in_length)
         die Filter auf 1.0 resetted und das muss auch im ::trigger passieren.
     */
 
-    if (cx.is_delay_active)
-        reset(cx);
+    if (trance_gate.is_delay_active)
+        reset(trance_gate);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::reset(context& cx)
+void TranceGateImpl::reset(TranceGate& trance_gate)
 {
     /*  Wenn Delay aktiv ist müssen die Filter auf 1.f resetted werden.
         Ansonsten klickt das leicht, weil die Filter nach dem Delay
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    real reset_value = cx.is_delay_active ? real(1.) : real(0.);
-    for (auto& filt_cx : cx.contour_filters)
+    real reset_value = trance_gate.is_delay_active ? real(1.) : real(0.);
+    for (auto& filter : trance_gate.contour_filters)
     {
-        dtb::filtering::one_pole_filter::reset(filt_cx, reset_value);
+        dtb::filtering::OnePoleImpl::reset(filter, reset_value);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::reset_step_pos(context& cx, i32 value)
+void TranceGateImpl::reset_step_pos(TranceGate& trance_gate, i32 value)
 {
-    cx.step_val.pos = value;
+    trance_gate.step_val.pos = value;
 }
 
 //------------------------------------------------------------------------
-i32 trance_gate::get_step_pos(const context& cx)
+i32 TranceGateImpl::get_step_pos(const TranceGate& trance_gate)
 {
-    return cx.step_val.pos;
+    return trance_gate.step_val.pos;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::process(context& cx, audio_frame const& in, audio_frame& out)
+void TranceGateImpl::process(TranceGate& trance_gate,
+                             AudioFrame const& in,
+                             AudioFrame& out)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
     // When delay is active and delay_phase has not yet overflown, just pass
     // through.
-    bool const is_overflow = phs::advance_one_shot(
-        cx.delay_phase_cx, cx.delay_phase_val, ONE_SAMPLE);
-    if (cx.is_delay_active && !is_overflow)
+    bool const is_overflow = PhaseImpl::advance_one_shot(
+        trance_gate.delay_phase, trance_gate.delay_phase_val, ONE_SAMPLE);
+    if (trance_gate.is_delay_active && !is_overflow)
     {
         out = in;
         return;
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    mut_real value_le = cx.channel_steps.at(L).at(cx.step_val.pos);
-    mut_real value_ri = cx.channel_steps.at(cx.ch).at(cx.step_val.pos);
+    mut_real value_le = trance_gate.channel_steps.at(TranceGate::L)
+                            .at(trance_gate.step_val.pos);
+    mut_real value_ri = trance_gate.channel_steps.at(trance_gate.ch)
+                            .at(trance_gate.step_val.pos);
 
     // Keep order here. Mix must be applied last. The filters smooth everything,
     // cracklefree.
-    apply_shuffle(value_le, value_ri, cx.step_phase_val, cx);
-    apply_width(value_le, value_ri, cx.width);
-    apply_contour(value_le, value_ri, cx.contour_filters);
-    real tmp_mix =
-        cx.is_fade_in_active ? cx.mix * cx.fade_in_phase_val : cx.mix;
+    apply_shuffle(value_le, value_ri, trance_gate.step_phase_val, trance_gate);
+    apply_width(value_le, value_ri, trance_gate.width);
+    apply_contour(value_le, value_ri, trance_gate.contour_filters);
+    real tmp_mix = trance_gate.is_fade_in_active
+                       ? trance_gate.mix * trance_gate.fade_in_phase_val
+                       : trance_gate.mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
-    out.data[L] = in.data[L] * value_le;
-    out.data[R] = in.data[R] * value_ri;
+    out.data[TranceGate::L] = in.data[TranceGate::L] * value_le;
+    out.data[TranceGate::R] = in.data[TranceGate::R] * value_ri;
 
-    update_phases(cx);
+    update_phases(trance_gate);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::update_phases(context& cx)
+void TranceGateImpl::update_phases(TranceGate& trance_gate)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    phs::advance_one_shot(cx.fade_in_phase_cx, cx.fade_in_phase_val,
-                          ONE_SAMPLE);
+    PhaseImpl::advance_one_shot(trance_gate.fade_in_phase,
+                                trance_gate.fade_in_phase_val, ONE_SAMPLE);
 
     // When step_phase has overflown, increment step.
-    bool const is_overflow =
-        phs::advance(cx.step_phase_cx, cx.step_phase_val, ONE_SAMPLE);
+    bool const is_overflow = PhaseImpl::advance(
+        trance_gate.step_phase, trance_gate.step_phase_val, ONE_SAMPLE);
     if (is_overflow)
     {
-        ++cx.step_val;
-        set_shuffle(cx.step_val, cx.step_phase_cx.note_len);
+        ++trance_gate.step_val;
+        set_shuffle(trance_gate.step_val, trance_gate.step_phase.note_len);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_sample_rate(context& cx, real value)
+void TranceGateImpl::set_sample_rate(TranceGate& trance_gate, real value)
 {
-    using phs = dtb::modulation::phase;
-    using opf = dtb::filtering::one_pole_filter;
+    using PhaseImpl   = dtb::modulation::PhaseImpl;
+    using OnePoleImpl = dtb::filtering::OnePoleImpl;
 
-    phs::set_sample_rate(cx.delay_phase_cx, value);
-    phs::set_sample_rate(cx.fade_in_phase_cx, value);
-    phs::set_sample_rate(cx.step_phase_cx, value);
+    PhaseImpl::set_sample_rate(trance_gate.delay_phase, value);
+    PhaseImpl::set_sample_rate(trance_gate.fade_in_phase, value);
+    PhaseImpl::set_sample_rate(trance_gate.step_phase, value);
 
-    cx.sample_rate = value;
+    trance_gate.sample_rate = value;
 
-    for (auto& filt_cx : cx.contour_filters)
+    for (auto& filter : trance_gate.contour_filters)
     {
-        real pole = opf::tau_to_pole(cx.contour, cx.sample_rate);
-        opf::update_pole(filt_cx, pole);
+        real pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
+                                             trance_gate.sample_rate);
+        OnePoleImpl::update_pole(filter, pole);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step(context& cx,
-                           i32 channel,
-                           i32 step,
-                           real value_normalised)
+void TranceGateImpl::set_step(TranceGate& trance_gate,
+                              i32 channel,
+                              i32 step,
+                              real value_normalised)
 {
-    cx.channel_steps.at(channel).at(step) = value_normalised;
+    trance_gate.channel_steps.at(channel).at(step) = value_normalised;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_width(context& cx, real value_normalised)
+void TranceGateImpl::set_width(TranceGate& trance_gate, real value_normalised)
 {
-    cx.width = real(1.) - value_normalised;
+    trance_gate.width = real(1.) - value_normalised;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_shuffle_amount(context& cx, real value)
+void TranceGateImpl::set_shuffle_amount(TranceGate& trance_gate, real value)
 {
-    cx.shuffle = value;
+    trance_gate.shuffle = value;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_stereo_mode(context& cx, bool value)
+void TranceGateImpl::set_stereo_mode(TranceGate& trance_gate, bool value)
 {
-    cx.ch = value ? R : L;
+    trance_gate.ch = value ? TranceGate::R : TranceGate::L;
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_len(context& cx, real value_note_len)
+void TranceGateImpl::set_step_len(TranceGate& trance_gate, real value_note_len)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    phs::set_note_len(cx.step_phase_cx, value_note_len);
+    PhaseImpl::set_note_len(trance_gate.step_phase, value_note_len);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_tempo(context& cx, real value)
+void TranceGateImpl::set_tempo(TranceGate& trance_gate, real value)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    phs::set_tempo(cx.delay_phase_cx, value);
-    phs::set_tempo(cx.fade_in_phase_cx, value);
-    phs::set_tempo(cx.step_phase_cx, value);
+    PhaseImpl::set_tempo(trance_gate.delay_phase, value);
+    PhaseImpl::set_tempo(trance_gate.fade_in_phase, value);
+    PhaseImpl::set_tempo(trance_gate.step_phase, value);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::update_project_time_music(context& cx, real value)
+void TranceGateImpl::update_project_time_music(TranceGate& trance_gate,
+                                               real value)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    phs::set_project_time(cx.delay_phase_cx, value);
-    phs::set_project_time(cx.fade_in_phase_cx, value);
-    phs::set_project_time(cx.step_phase_cx, value);
+    PhaseImpl::set_project_time(trance_gate.delay_phase, value);
+    PhaseImpl::set_project_time(trance_gate.fade_in_phase, value);
+    PhaseImpl::set_project_time(trance_gate.step_phase, value);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_step_count(context& cx, i32 value)
+void TranceGateImpl::set_step_count(TranceGate& trance_gate, i32 value)
 {
-    cx.step_val.count = value;
-    cx.step_val.count =
-        std::clamp(cx.step_val.count, MIN_NUM_STEPS, MAX_NUM_STEPS);
+    trance_gate.step_val.count = value;
+    trance_gate.step_val.count =
+        std::clamp(trance_gate.step_val.count, TranceGate::MIN_NUM_STEPS,
+                   TranceGate::MAX_NUM_STEPS);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_contour(context& cx, real value_seconds)
+void TranceGateImpl::set_contour(TranceGate& trance_gate, real value_seconds)
 {
-    using opf = dtb::filtering::one_pole_filter;
+    using OnePoleImpl = dtb::filtering::OnePoleImpl;
 
-    if (cx.contour == value_seconds)
+    if (trance_gate.contour == value_seconds)
         return;
 
-    cx.contour = value_seconds;
-    for (auto& filt_cx : cx.contour_filters)
+    trance_gate.contour = value_seconds;
+    for (auto& filter : trance_gate.contour_filters)
     {
-        real pole = opf::tau_to_pole(cx.contour, cx.sample_rate);
-        opf::update_pole(filt_cx, pole);
+        real pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
+                                             trance_gate.sample_rate);
+        OnePoleImpl::update_pole(filter, pole);
     }
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_fade_in(context& cx, real value)
+void TranceGateImpl::set_fade_in(TranceGate& trance_gate, real value)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    cx.is_fade_in_active = value > real(0.);
-    if (!cx.is_fade_in_active)
+    trance_gate.is_fade_in_active = value > real(0.);
+    if (!trance_gate.is_fade_in_active)
         return;
 
-    phs::set_note_len(cx.fade_in_phase_cx, value);
+    PhaseImpl::set_note_len(trance_gate.fade_in_phase, value);
 }
 
 //------------------------------------------------------------------------
-void trance_gate::set_delay(context& cx, real value)
+void TranceGateImpl::set_delay(TranceGate& trance_gate, real value)
 {
-    using phs = dtb::modulation::phase;
+    using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    cx.is_delay_active = value > real(0.);
-    if (!cx.is_delay_active)
+    trance_gate.is_delay_active = value > real(0.);
+    if (!trance_gate.is_delay_active)
         return;
 
-    phs::set_note_len(cx.delay_phase_cx, value);
+    PhaseImpl::set_note_len(trance_gate.delay_phase, value);
 }
 
 //------------------------------------------------------------------------
