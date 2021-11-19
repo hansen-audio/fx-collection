@@ -10,29 +10,29 @@ namespace ha::fx_collection {
 static constexpr i32 ONE_SAMPLE = 1;
 
 //------------------------------------------------------------------------
-static void apply_width(mut_real& value_le, mut_real& value_ri, real width)
+static void apply_width(mut_f32& value_le, mut_f32& value_ri, f32 width)
 {
     value_le = std::max(value_le, value_ri * width);
     value_ri = std::max(value_ri, value_le * width);
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(mut_real& value, real mix)
+static void apply_mix(mut_f32& value, f32 mix)
 {
-    static constexpr real MIX_MAX = real(1.);
-    value                         = (MIX_MAX - mix) + value * mix;
+    static constexpr f32 MIX_MAX = f32(1.);
+    value                        = (MIX_MAX - mix) + value * mix;
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(mut_real& value_le, mut_real& value_ri, real mix)
+static void apply_mix(mut_f32& value_le, mut_f32& value_ri, f32 mix)
 {
     apply_mix(value_le, mix);
     apply_mix(value_ri, mix);
 }
 
 //------------------------------------------------------------------------
-static void apply_contour(mut_real& value_le,
-                          mut_real& value_ri,
+static void apply_contour(mut_f32& value_le,
+                          mut_f32& value_ri,
                           TranceGate::ContourFilters& contour_filters)
 {
     using OnePoleImpl = dtb::filtering::OnePoleImpl;
@@ -44,32 +44,32 @@ static void apply_contour(mut_real& value_le,
 }
 
 //------------------------------------------------------------------------
-static void apply_gate_delay(mut_real& value_le,
-                             mut_real& value_ri,
-                             real phase_value,
-                             real delay)
+static void apply_gate_delay(mut_f32& value_le,
+                             mut_f32& value_ri,
+                             f32 phase_value,
+                             f32 delay)
 {
-    real factor = phase_value > delay ? real(1.) : real(0.);
+    f32 factor = phase_value > delay ? f32(1.) : f32(0.);
     value_le *= factor;
     value_ri *= factor;
 }
 
 //------------------------------------------------------------------------
-static void apply_shuffle(mut_real& value_le,
-                          mut_real& value_ri,
-                          real phase_value,
+static void apply_shuffle(mut_f32& value_le,
+                          mut_f32& value_ri,
+                          f32 phase_value,
                           TranceGate const& trance_gate)
 {
     // TODO: Is this a good value for a MAX_DELAY?
-    constexpr real MAX_DELAY = real(3. / 4.);
-    real delay               = trance_gate.shuffle * MAX_DELAY;
+    constexpr f32 MAX_DELAY = f32(3. / 4.);
+    f32 delay               = trance_gate.shuffle * MAX_DELAY;
 
     if (trance_gate.step_val.is_shuffle)
         apply_gate_delay(value_le, value_ri, phase_value, delay);
 }
 
 //------------------------------------------------------------------------
-static void set_shuffle(TranceGate::Step& s, real note_len)
+static void set_shuffle(TranceGate::Step& s, f32 note_len)
 {
     s.is_shuffle = detail::is_shuffle_note(s.pos, note_len);
 }
@@ -92,7 +92,7 @@ TranceGate TranceGateImpl::create()
 
     TranceGate trance_gate;
 
-    constexpr real INIT_NOTE_LEN = real(1. / 32.);
+    constexpr f32 INIT_NOTE_LEN = f32(1. / 32.);
 
     PhaseImpl::set_rate(trance_gate.delay_phase,
                         PhaseImpl::note_length_to_rate(INIT_NOTE_LEN));
@@ -109,7 +109,7 @@ TranceGate TranceGateImpl::create()
     PhaseImpl::set_sync_mode(trance_gate.step_phase,
                              Phase::SyncMode::ProjectSync);
 
-    constexpr real TEMPO_BPM = real(120.);
+    constexpr f32 TEMPO_BPM = f32(120.);
     set_tempo(trance_gate, TEMPO_BPM);
 
     return trance_gate;
@@ -117,8 +117,8 @@ TranceGate TranceGateImpl::create()
 
 //------------------------------------------------------------------------
 void TranceGateImpl::trigger(TranceGate& trance_gate,
-                             real delay_length,
-                             real fade_in_length)
+                             f32 delay_length,
+                             f32 fade_in_length)
 {
     //! Delay and FadeIn time can only be set in trigger. Changing
     //! these parameters after trigger resp. during the gate is
@@ -126,9 +126,9 @@ void TranceGateImpl::trigger(TranceGate& trance_gate,
     set_delay(trance_gate, delay_length);
     set_fade_in(trance_gate, fade_in_length);
 
-    trance_gate.delay_phase_val   = real(0.);
-    trance_gate.fade_in_phase_val = real(0.);
-    trance_gate.step_phase_val    = real(0.);
+    trance_gate.delay_phase_val   = f32(0.);
+    trance_gate.fade_in_phase_val = f32(0.);
+    trance_gate.step_phase_val    = f32(0.);
     trance_gate.step_val.pos      = 0;
 
     /*	Do not reset filters in trigger. Because there can still be a voice
@@ -155,7 +155,7 @@ void TranceGateImpl::reset(TranceGate& trance_gate)
         erst ganz kurz von 0.f - 1.f einschwingen müssen. Das hört man in Form
         eines Klickens.
     */
-    real reset_value = trance_gate.is_delay_active ? real(1.) : real(0.);
+    f32 reset_value = trance_gate.is_delay_active ? f32(1.) : f32(0.);
     for (auto& filter : trance_gate.contour_filters)
     {
         OnePoleImpl::reset(filter, reset_value);
@@ -192,19 +192,19 @@ void TranceGateImpl::process(TranceGate& trance_gate,
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    mut_real value_le = trance_gate.channel_steps.at(TranceGate::L)
-                            .at(trance_gate.step_val.pos);
-    mut_real value_ri = trance_gate.channel_steps.at(trance_gate.ch)
-                            .at(trance_gate.step_val.pos);
+    mut_f32 value_le = trance_gate.channel_steps.at(TranceGate::L)
+                           .at(trance_gate.step_val.pos);
+    mut_f32 value_ri = trance_gate.channel_steps.at(trance_gate.ch)
+                           .at(trance_gate.step_val.pos);
 
     // Keep order here. Mix must be applied last. The filters smooth everything,
     // cracklefree.
     apply_shuffle(value_le, value_ri, trance_gate.step_phase_val, trance_gate);
     apply_width(value_le, value_ri, trance_gate.width);
     apply_contour(value_le, value_ri, trance_gate.contour_filters);
-    real tmp_mix = trance_gate.is_fade_in_active
-                       ? trance_gate.mix * trance_gate.fade_in_phase_val
-                       : trance_gate.mix;
+    f32 tmp_mix = trance_gate.is_fade_in_active
+                      ? trance_gate.mix * trance_gate.fade_in_phase_val
+                      : trance_gate.mix;
     apply_mix(value_le, value_ri, tmp_mix);
 
     out.data[TranceGate::L] = in.data[TranceGate::L] * value_le;
@@ -232,7 +232,7 @@ void TranceGateImpl::update_phases(TranceGate& trance_gate)
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_sample_rate(TranceGate& trance_gate, real value)
+void TranceGateImpl::set_sample_rate(TranceGate& trance_gate, f32 value)
 {
     using PhaseImpl   = dtb::modulation::PhaseImpl;
     using OnePoleImpl = dtb::filtering::OnePoleImpl;
@@ -245,8 +245,8 @@ void TranceGateImpl::set_sample_rate(TranceGate& trance_gate, real value)
 
     for (auto& filter : trance_gate.contour_filters)
     {
-        real pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
-                                             trance_gate.sample_rate);
+        f32 pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
+                                            trance_gate.sample_rate);
         OnePoleImpl::update_pole(filter, pole);
     }
 }
@@ -255,19 +255,19 @@ void TranceGateImpl::set_sample_rate(TranceGate& trance_gate, real value)
 void TranceGateImpl::set_step(TranceGate& trance_gate,
                               i32 channel,
                               i32 step,
-                              real value_normalised)
+                              f32 value_normalised)
 {
     trance_gate.channel_steps.at(channel).at(step) = value_normalised;
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_width(TranceGate& trance_gate, real value_normalised)
+void TranceGateImpl::set_width(TranceGate& trance_gate, f32 value_normalised)
 {
-    trance_gate.width = real(1.) - value_normalised;
+    trance_gate.width = f32(1.) - value_normalised;
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_shuffle_amount(TranceGate& trance_gate, real value)
+void TranceGateImpl::set_shuffle_amount(TranceGate& trance_gate, f32 value)
 {
     trance_gate.shuffle = value;
 }
@@ -279,7 +279,7 @@ void TranceGateImpl::set_stereo_mode(TranceGate& trance_gate, bool value)
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_step_len(TranceGate& trance_gate, real value_note_len)
+void TranceGateImpl::set_step_len(TranceGate& trance_gate, f32 value_note_len)
 {
     using PhaseImpl = dtb::modulation::PhaseImpl;
 
@@ -287,7 +287,7 @@ void TranceGateImpl::set_step_len(TranceGate& trance_gate, real value_note_len)
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_tempo(TranceGate& trance_gate, real value)
+void TranceGateImpl::set_tempo(TranceGate& trance_gate, f32 value)
 {
     using PhaseImpl = dtb::modulation::PhaseImpl;
 
@@ -298,7 +298,7 @@ void TranceGateImpl::set_tempo(TranceGate& trance_gate, real value)
 
 //------------------------------------------------------------------------
 void TranceGateImpl::update_project_time_music(TranceGate& trance_gate,
-                                               real value)
+                                               f64 value)
 {
     using PhaseImpl = dtb::modulation::PhaseImpl;
 
@@ -317,7 +317,7 @@ void TranceGateImpl::set_step_count(TranceGate& trance_gate, i32 value)
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_contour(TranceGate& trance_gate, real value_seconds)
+void TranceGateImpl::set_contour(TranceGate& trance_gate, f32 value_seconds)
 {
     using OnePoleImpl = dtb::filtering::OnePoleImpl;
 
@@ -327,18 +327,18 @@ void TranceGateImpl::set_contour(TranceGate& trance_gate, real value_seconds)
     trance_gate.contour = value_seconds;
     for (auto& filter : trance_gate.contour_filters)
     {
-        real pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
-                                             trance_gate.sample_rate);
+        f32 pole = OnePoleImpl::tau_to_pole(trance_gate.contour,
+                                            trance_gate.sample_rate);
         OnePoleImpl::update_pole(filter, pole);
     }
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_fade_in(TranceGate& trance_gate, real value)
+void TranceGateImpl::set_fade_in(TranceGate& trance_gate, f32 value)
 {
     using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    trance_gate.is_fade_in_active = value > real(0.);
+    trance_gate.is_fade_in_active = value > f32(0.);
     if (!trance_gate.is_fade_in_active)
         return;
 
@@ -346,11 +346,11 @@ void TranceGateImpl::set_fade_in(TranceGate& trance_gate, real value)
 }
 
 //------------------------------------------------------------------------
-void TranceGateImpl::set_delay(TranceGate& trance_gate, real value)
+void TranceGateImpl::set_delay(TranceGate& trance_gate, f32 value)
 {
     using PhaseImpl = dtb::modulation::PhaseImpl;
 
-    trance_gate.is_delay_active = value > real(0.);
+    trance_gate.is_delay_active = value > f32(0.);
     if (!trance_gate.is_delay_active)
         return;
 

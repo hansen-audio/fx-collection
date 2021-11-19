@@ -23,7 +23,7 @@ struct TranceGate
     static constexpr i32 L             = 0;
     static constexpr i32 R             = 1;
 
-    using StepValues     = std::array<mut_real, MAX_NUM_STEPS>;
+    using StepValues     = std::array<mut_f32, MAX_NUM_STEPS>;
     using ChannelSteps   = std::array<StepValues, NUM_CHANNELS>;
     using ContourFilters = std::array<dtb::filtering::OnePole, NUM_CHANNELS>;
     alignas(BYTE_ALIGNMENT) ChannelSteps channel_steps;
@@ -45,16 +45,16 @@ struct TranceGate
     dtb::modulation::Phase delay_phase;
     dtb::modulation::Phase fade_in_phase;
     dtb::modulation::Phase step_phase;
-    mut_real delay_phase_val   = real(0.);
-    mut_real step_phase_val    = real(0.);
-    mut_real fade_in_phase_val = real(0.);
+    mut_f32 delay_phase_val   = f32(0.);
+    mut_f32 step_phase_val    = f32(0.);
+    mut_f32 fade_in_phase_val = f32(0.);
 
     Step step_val;
-    mut_real mix           = real(1.);
-    mut_real width         = real(0.);
-    mut_real shuffle       = real(0.);
-    mut_real contour       = real(0.01);
-    mut_real sample_rate   = real(44100.);
+    mut_f32 mix            = f32(1.);
+    mut_f32 width          = f32(0.);
+    mut_f32 shuffle        = f32(0.);
+    mut_f32 contour        = f32(0.01);
+    mut_f32 sample_rate    = f32(44100.);
     mut_i32 ch             = L;
     bool is_delay_active   = false;
     bool is_fade_in_active = false;
@@ -76,17 +76,17 @@ struct TranceGateImpl final
     /**
      * @brief Sets the sample rate in [Hz].
      */
-    static void set_sample_rate(TranceGate& trance_gate, real value);
+    static void set_sample_rate(TranceGate& trance_gate, f32 value);
 
     /**
      * @brief Sets the tempo in [BPM].
      */
-    static void set_tempo(TranceGate& trance_gate, real value);
+    static void set_tempo(TranceGate& trance_gate, f32 value);
 
     /**
      * @brief Updates the musical project time [quarter notes].
      */
-    static void update_project_time_music(TranceGate& trance_gate, real value);
+    static void update_project_time_music(TranceGate& trance_gate, f64 value);
 
     /**
      * @brief Triggers the trance gate.
@@ -99,8 +99,8 @@ struct TranceGateImpl final
      * @param fade_in_len Length of fade_in time in [seconds].
      */
     static void trigger(TranceGate& trance_gate,
-                        real delay_len   = real(0.),
-                        real fade_in_len = real(0.));
+                        f32 delay_len   = f32(0.),
+                        f32 fade_in_len = f32(0.));
 
     /**
      * @brief Resets filters and values.
@@ -133,7 +133,7 @@ struct TranceGateImpl final
     static void set_step(TranceGate& trance_gate,
                          i32 channel,
                          i32 step,
-                         real value_normalised);
+                         f32 value_normalised);
 
     /**
      * @brief Sets the note length of a step. e.g. for 1/32th length, pass in
@@ -141,13 +141,13 @@ struct TranceGateImpl final
      * @param value [1/128 - 1] (Normal, Triolic, Dotted) Defining the length of
      * a step
      */
-    static void set_step_len(TranceGate& trance_gate, real value_note_len);
+    static void set_step_len(TranceGate& trance_gate, f32 value_note_len);
 
     /**
      * @brief Sets the mix of the trance gate.
      * @param value Defining the amount [normalised] of the trance gate
      */
-    static void set_mix(TranceGate& trance_gate, real value)
+    static void set_mix(TranceGate& trance_gate, f32 value)
     {
         trance_gate.mix = value;
     }
@@ -157,7 +157,7 @@ struct TranceGateImpl final
      * @param value Defining duration in [seconds: 4s - 0.001s] of attack and
      * release slope
      */
-    static void set_contour(TranceGate& trance_gate, real value_seconds);
+    static void set_contour(TranceGate& trance_gate, f32 value_seconds);
 
     /**
      * @brief Set the gate to either mono or stereo.
@@ -168,17 +168,17 @@ struct TranceGateImpl final
      * @brief Sets the width of the trance gate.
      * @param value Defining the amount [normalised] of stereo effect
      */
-    static void set_width(TranceGate& trance_gate, real value_normalised);
+    static void set_width(TranceGate& trance_gate, f32 value_normalised);
 
     /**
      * @brief Sets the amount of shuffle for the trance gate.
      * @param value Defining the amount [normalised] of shuffle
      */
-    static void set_shuffle_amount(TranceGate& trance_gate, real value);
+    static void set_shuffle_amount(TranceGate& trance_gate, f32 value);
 
 private:
-    static void set_fade_in(TranceGate& trance_gate, real value);
-    static void set_delay(TranceGate& trance_gate, real value);
+    static void set_fade_in(TranceGate& trance_gate, f32 value);
+    static void set_delay(TranceGate& trance_gate, f32 value);
     static void update_phases(TranceGate& trance_gate);
 };
 

@@ -14,6 +14,12 @@ using mut_i32 = std::remove_const<i32>::type;
 using real     = float const;
 using mut_real = std::remove_const<real>::type;
 
+using f32     = float const;
+using mut_f32 = std::remove_const<f32>::type;
+
+using f64     = double const;
+using mut_f64 = std::remove_const<f64>::type;
+
 using audio_sample = mut_real;
 
 constexpr std::size_t NUM_CHANNELS   = 4;
