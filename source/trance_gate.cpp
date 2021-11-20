@@ -10,10 +10,11 @@ namespace ha::fx_collection {
 static constexpr i32 ONE_SAMPLE = 1;
 
 //------------------------------------------------------------------------
-static void apply_width(mut_f32& value_le, mut_f32& value_ri, f32 width)
+static void
+apply_width(TranceGate const& trance_gate, mut_f32& value_le, mut_f32& value_ri)
 {
-    value_le = std::max(value_le, value_ri * width);
-    value_ri = std::max(value_ri, value_le * width);
+    value_le = std::max(value_le, value_ri * trance_gate.width);
+    value_ri = std::max(value_ri, value_le * trance_gate.width);
 }
 
 //------------------------------------------------------------------------
@@ -24,23 +25,39 @@ static void apply_mix(mut_f32& value, f32 mix)
 }
 
 //------------------------------------------------------------------------
-static void apply_mix(mut_f32& value_le, mut_f32& value_ri, f32 mix)
+static void apply_mix(f32 mix, mut_f32& value_le, mut_f32& value_ri)
 {
     apply_mix(value_le, mix);
     apply_mix(value_ri, mix);
 }
 
 //------------------------------------------------------------------------
-static void apply_contour(mut_f32& value_le,
-                          mut_f32& value_ri,
-                          TranceGate::ContourFilters& contour_filters)
+static void
+apply_contour(TranceGate& trance_gate, mut_f32& value_le, mut_f32& value_ri)
 {
     using OnePoleImpl = dtb::filtering::OnePoleImpl;
 
+    auto& contour_filters = trance_gate.contour_filters;
     value_le =
         OnePoleImpl::process(contour_filters.at(TranceGate::L), value_le);
     value_ri =
         OnePoleImpl::process(contour_filters.at(TranceGate::R), value_ri);
+}
+
+//------------------------------------------------------------------------
+static f32 compute_mix(TranceGate const& trance_gate)
+{
+    return trance_gate.is_fade_in_active
+               ? trance_gate.mix * trance_gate.fade_in_phase_val
+               : trance_gate.mix;
+}
+
+//------------------------------------------------------------------------
+static void
+apply_mix(TranceGate& trance_gate, mut_f32& value_le, mut_f32& value_ri)
+{
+    f32 tmp_mix = compute_mix(trance_gate);
+    apply_mix(tmp_mix, value_le, value_ri);
 }
 
 //------------------------------------------------------------------------
@@ -55,17 +72,29 @@ static void apply_gate_delay(mut_f32& value_le,
 }
 
 //------------------------------------------------------------------------
-static void apply_shuffle(mut_f32& value_le,
-                          mut_f32& value_ri,
-                          f32 phase_value,
-                          TranceGate const& trance_gate)
+static void apply_shuffle(TranceGate const& trance_gate,
+                          mut_f32& value_le,
+                          mut_f32& value_ri)
 {
     // TODO: Is this a good value for a MAX_DELAY?
     constexpr f32 MAX_DELAY = f32(3. / 4.);
     f32 delay               = trance_gate.shuffle * MAX_DELAY;
 
     if (trance_gate.step_val.is_shuffle)
-        apply_gate_delay(value_le, value_ri, phase_value, delay);
+        apply_gate_delay(value_le, value_ri, trance_gate.step_phase_val, delay);
+}
+
+//------------------------------------------------------------------------
+static void apply_trance_gate_fx(TranceGate& trance_gate,
+                                 mut_f32& value_le,
+                                 mut_f32& value_ri)
+{
+    // Keep order here. Mix must be applied last. The filters smooth everything,
+    // cracklefree.
+    apply_shuffle(trance_gate, value_le, value_ri);
+    apply_width(trance_gate, value_le, value_ri);
+    apply_contour(trance_gate, value_le, value_ri);
+    apply_mix(trance_gate, value_le, value_ri);
 }
 
 //------------------------------------------------------------------------
@@ -192,20 +221,11 @@ void TranceGateImpl::process(TranceGate& trance_gate,
     }
 
     //! Get the step value. Right channel depends on Stereo mode
-    mut_f32 value_le = trance_gate.channel_steps.at(TranceGate::L)
-                           .at(trance_gate.step_val.pos);
-    mut_f32 value_ri = trance_gate.channel_steps.at(trance_gate.ch)
-                           .at(trance_gate.step_val.pos);
+    i32 pos          = trance_gate.step_val.pos;
+    mut_f32 value_le = trance_gate.channel_steps[TranceGate::L][pos];
+    mut_f32 value_ri = trance_gate.channel_steps[trance_gate.ch][pos];
 
-    // Keep order here. Mix must be applied last. The filters smooth everything,
-    // cracklefree.
-    apply_shuffle(value_le, value_ri, trance_gate.step_phase_val, trance_gate);
-    apply_width(value_le, value_ri, trance_gate.width);
-    apply_contour(value_le, value_ri, trance_gate.contour_filters);
-    f32 tmp_mix = trance_gate.is_fade_in_active
-                      ? trance_gate.mix * trance_gate.fade_in_phase_val
-                      : trance_gate.mix;
-    apply_mix(value_le, value_ri, tmp_mix);
+    apply_trance_gate_fx(trance_gate, value_le, value_ri);
 
     out.data[TranceGate::L] = in.data[TranceGate::L] * value_le;
     out.data[TranceGate::R] = in.data[TranceGate::R] * value_ri;
